@@ -1,0 +1,182 @@
+ /* Screenshoot Upload Box */
+ .proof {
+    border-radius: 15px;
+    padding: 12px;
+    text-align: center;
+    background-color: white;
+    box-shadow: 5px 5px 15px #c7c7c7, -5px -5px 24px #f9f9f9;
+}
+
+.imgArea {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    /* gap: 10px; */
+    /* padding: 15px;
+    height: 270px;
+    width: 300px; */
+    background-color: rgb(242, 242, 242);
+    border-radius: 10px;
+}
+
+.imgArea i {
+    font-size: 50px;
+    margin-top: 10PX;
+}
+
+.imgArea h5 {
+    font-weight: 900;
+}
+
+.imgArea p {
+    color: grey;
+}
+
+.imgArea p span {
+    font-weight: 800;
+}
+
+.imgArea img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+    border-radius: 10px;
+    background: #fff;
+    z-index: 3;
+}
+
+.imgArea::before {
+    content: attr(data-title);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 4;
+    pointer-events: none;
+    opacity: 0;
+    transition: .5s;
+    border-radius: 8px;
+}
+
+.imgArea.active:hover::before {
+    opacity: 1;
+}
+
+.selectImage {
+    margin-top: 10px;
+    padding: 10px 15px;
+    border-radius: 10px;
+    width: 100%;
+    text-transform: uppercase;
+}
+
+.agreement {
+    padding: 15px 15px 30px;
+    margin: 15px 0 20px;
+}
+
+/* Screenshoot Upload Box */
+
+
+.btn-group1 {
+    /* display: flex; */
+    /* gap: .6rem; */
+    /* flex-direction: column; */
+
+}
+
+.btn-check1 {
+    display: none;
+}
+
+.btn1 {
+    padding: 10px 20px;
+    border: 1px solid #000;
+    border-radius: 5px;
+    background-color: transparent;
+    color: #007bff;
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.btn1:hover {
+    background-color: #5a5c69b3;
+    color: white;
+}
+
+.btn-check1:checked+.btn {
+    background-color: #007bff;
+    color: white;
+    
+}
+
+.tick{
+    position: relative;
+}
+
+.btn-check1:checked + .tick::after {
+    content: "✓";
+    position: absolute;
+    top: 1px;
+    right: 5px;
+    font-size: 14px;
+    color: white;
+}
+
+.badge-dot.badge-md i {
+    width: 1rem;
+    height: 1rem;
+}
+
+.hover { 
+    transition: border 0.3s, box-shadow 0.3s, transform 0.3s, background-color 0.3s; 
+    background-color: transparent;
+}
+ 
+/* Hover variant 1: subtle effect */
+.hover-1:hover {
+    background-color: #e9ecef;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+    transform: scale(1.02);
+}
+
+/* Hover variant 2: medium effect */
+.hover-2:hover {
+    background-color: #f8f9fa;
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.25);
+    transform: scale(1.03);
+}
+
+/* Hover variant 3: strong effect */
+.hover-3:hover {
+    background-color: #f1f3f5;
+    box-shadow: 0 6px 15px rgba(0, 123, 255, 0.35);
+    transform: scale(1.05);
+}
+
+/* Hover variant 4: more prominent */
+.hover-4:hover {
+    background-color: #dee2e6;
+    box-shadow: 0 8px 20px rgba(0, 123, 255, 0.45);
+    transform: scale(1.07);
+}
+
+/* Hover variant 5: the strongest effect */
+.hover-5:hover {
+    background-color: #ced4da;
+    box-shadow: 0 10px 25px rgba(0, 123, 255, 0.55);
+    transform: scale(1.1);
+}

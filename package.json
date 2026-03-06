@@ -1,0 +1,55 @@
+{
+  "name": "solar",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --fix"
+  },
+  "dependencies": {
+    "@fortawesome/free-solid-svg-icons": "^7.0.1",
+    "@fortawesome/vue-fontawesome": "^3.1.2",
+    "@popperjs/core": "^2.11.8",
+    "axios": "^1.12.2",
+    "bootstrap": "^5.3.8",
+    "bootstrap-vue-next": "^0.40.7",
+    "chart.js": "^4.5.1",
+    "datatables.net": "^2.3.4",
+    "datatables.net-bs5": "^2.3.4",
+    "datatables.net-buttons": "^3.2.5",
+    "datatables.net-buttons-bs5": "^3.2.5",
+    "datatables.net-responsive-bs5": "^3.0.7",
+    "datatables.net-select-bs5": "^3.1.3",
+    "datatables.net-vue3": "^3.0.4",
+    "html2pdf.js": "^0.12.1",
+    "jquery": "^3.7.1",
+    "jszip": "^3.10.1",
+    "lucide-vue-next": "^0.563.0",
+    "pdfmake": "^0.2.20",
+    "pinia": "^3.0.3",
+    "swiper": "^12.1.0",
+    "uuid": "^13.0.0",
+    "vue": "^3.5.18",
+    "vue-chartjs": "^5.3.3",
+    "vue-multiselect": "^3.3.1",
+    "vue-router": "^4.5.1",
+    "vue-toastification": "^2.0.0-rc.5",
+    "vue3-print-nb": "^0.1.4",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.31.0",
+    "@vitejs/plugin-vue": "^6.0.1",
+    "eslint": "^9.31.0",
+    "eslint-plugin-vue": "~10.3.0",
+    "globals": "^16.3.0",
+    "vite": "^7.0.6",
+    "vite-plugin-vue-devtools": "^8.0.0"
+  }
+}
