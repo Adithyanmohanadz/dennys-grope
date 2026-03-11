@@ -10,14 +10,14 @@
             <img :src="websiteLogo" alt="Logo" class="mb-4 logo-img" />
             <h2 class="fw-bold mb-3">Welcome to {{ websiteName }}</h2>
             <p class="text-muted">
-              Login to access your orders, wishlist, and recommendations for your system.
+              Login to access your orders, and recommendations for your system.
             </p>
-            <p class="mt-3">
+            <!-- <p class="mt-3">
               Don't have an account?
               <RouterLink to="/auth/register" class="text-success fw-semibold">
                 Register here
               </RouterLink>
-            </p>
+            </p> -->
           </div>
 
           <!-- Right card -->
@@ -140,7 +140,7 @@
               </div>
               <!-- END OTP SECTION -->
 
-              <p class="mt-3 d-block d-lg-none">
+              <p class="mt-3  ">
                 Don't have an account?
                 <RouterLink to="/auth/register" class="text-success fw-semibold">
                   Register here
@@ -158,12 +158,14 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from "vue";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
 import { websiteApi } from "@/services/api";
 import Navbar from "@/views/components/website/Navbar.vue";
 import AuthFooter from "@/views/components/website/AuthFooter.vue";
+import emitter from "@/utils/emitter.js";
 
 const router = useRouter();
+const route = useRoute();
 
 // ── Shared ────────────────────────────────────────────────────────────────────
 const loading = ref(false);
@@ -228,8 +230,10 @@ const handleLogin = async () => {
       const userData = response.data.data;
       localStorage.setItem("website_user_token", userData.token);
       localStorage.setItem("website_user", JSON.stringify(userData.user));
+      localStorage.setItem("website_user_token_saved_at", Date.now().toString());
+      emitter.emit("user-logged-in");
       showAlert("Login successful! Redirecting...", "success");
-      setTimeout(() => router.push("/shop"), 1500);
+      setTimeout(() => router.push(route.query.redirect || "/cart"), 1500);
     } else {
       showAlert(response.data.message || "Login failed", "danger");
     }
@@ -284,8 +288,10 @@ const verifyOtp = async () => {
       const userData = response.data.data;
       localStorage.setItem("website_user_token", userData.token);
       localStorage.setItem("website_user", JSON.stringify(userData.user));
+      localStorage.setItem("website_user_token_saved_at", Date.now().toString());
+      emitter.emit("user-logged-in");
       showAlert("Login successful! Redirecting...", "success");
-      setTimeout(() => router.push("/shop"), 1500);
+      setTimeout(() => router.push(route.query.redirect || "/cart"), 1500);
     } else {
       showAlert(response.data.message || "Invalid OTP. Please try again.", "danger");
     }

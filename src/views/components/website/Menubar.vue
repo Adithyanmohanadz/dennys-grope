@@ -123,9 +123,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, onUnmounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { Offcanvas } from "bootstrap";
+import emitter from "@/utils/emitter.js";
 
 const router = useRouter();
 const route = useRoute();
@@ -210,9 +211,13 @@ function isActive(path) {
 // Load user data on component mount
 onMounted(() => {
   loadUserData();
-
-  // Optional: Listen for storage changes (for multi-tab support)
   window.addEventListener("storage", loadUserData);
+  emitter.on("user-logged-in", loadUserData);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("storage", loadUserData);
+  emitter.off("user-logged-in");
 });
 </script>
 

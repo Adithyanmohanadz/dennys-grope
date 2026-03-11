@@ -1,141 +1,174 @@
 <template>
-  <div class="admin-item-edit">
-    <div class="container-fluid px-1 px-md-4">
-      <!-- Loading Spinner -->
-      <div v-if="isLoading" class="text-center py-5">
-        <div class="spinner-border text-white" role="status">
-          <span class="visually-hidden">Loading...</span>
-        </div>
-        <p class="mt-3 text-white">Loading item data...</p>
-      </div>
+  <div class="container-fluid px-1 px-md-4">
+    <div class="row">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header pb-0">
+            <div class="d-flex align-items-center">
+              <div>
+                <h5 class="fw-bolder">Edit Item</h5>
+                <p class="text-muted text-xs mb-0">Update item details and variant configurations</p>
+              </div>
+              <div class="ms-auto my-auto d-flex gap-2">
+                <button type="button" class="btn bg-gradient-secondary btn-sm mb-0" @click="goBack">
+                  <i class="fas fa-arrow-left"></i>&nbsp; Back to List
+                </button>
+              </div>
+            </div>
+          </div>
 
-      <form v-else @submit.prevent="submitForm">
-        <div class="row">
-          <div class="col-lg-12">
-            <div class="card">
-              <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                  <h5 class="font-weight-bolder mb-0">Edit Item Information</h5>
-                  <!-- <span class="badge bg-info">Item ID: {{ itemId }}</span> -->
+          <div class="card-body">
+            <!-- Loading State -->
+            <div v-if="loading" class="text-center p-4">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              <p class="text-muted mt-2">Loading item data...</p>
+            </div>
+
+            <!-- Edit Form -->
+            <div v-else-if="itemData">
+              <!-- This is a placeholder for AdminItemInfo component -->
+              <!-- In real implementation, you would import and use AdminItemInfo component here -->
+              <!-- For now, showing the structure -->
+              
+              <div class="alert alert-info border-0">
+                <div class="d-flex align-items-center">
+                  <i class="fas fa-info-circle fa-2x me-3"></i>
+                  <div>
+                    <h6 class="mb-1">Edit Mode Active</h6>
+                    <p class="mb-0 text-sm">
+                      Editing: <strong>{{ itemData.item_name }}</strong> (ID: {{ itemId }})
+                    </p>
+                    <p class="mb-0 text-xs text-muted mt-1">
+                      Use your AdminItemInfo component here with :editMode="true" :itemData="itemData"
+                    </p>
+                  </div>
                 </div>
+              </div>
 
-                <div class="row mt-3">
-                  <div class="col-12 col-md-4">
-                    <label>Item Name <span class="text-danger">*</span></label>
-                    <input v-model="formData.itemName" class="form-control" type="text" placeholder="Item Name"
-                      required />
+              <!-- Item Summary Card -->
+              <div class="card mb-3 border">
+                <div class="card-header bg-light pb-0">
+                  <h6 class="mb-2">Current Item Data</h6>
+                </div>
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col-md-6">
+                      <p class="text-sm mb-2"><strong>Item Name:</strong> {{ itemData.item_name }}</p>
+                      <p class="text-sm mb-2"><strong>Alias Code:</strong> {{ itemData.item_alias_code }}</p>
+                      <p class="text-sm mb-2"><strong>Category:</strong> {{ getCategoryName(itemData.category_id) }}</p>
+                    </div>
+                    <div class="col-md-6">
+                      <p class="text-sm mb-2"><strong>Status:</strong> 
+                        <span :class="['badge', itemData.status === 1 ? 'badge-success' : 'badge-danger']">
+                          {{ itemData.status === 1 ? 'Active' : 'Inactive' }}
+                        </span>
+                      </p>
+                      <p class="text-sm mb-2"><strong>Created:</strong> {{ itemData.created_at }}</p>
+                      <p class="text-sm mb-2"><strong>Last Updated:</strong> {{ itemData.updated_at }}</p>
+                    </div>
+                  </div>
+                  
+                  <div class="mt-3">
+                    <p class="text-sm mb-1"><strong>Description:</strong></p>
+                    <p class="text-xs text-muted">{{ itemData.description || 'No description' }}</p>
                   </div>
 
-                  <div class="col-12 col-md-4">
-                    <label>Item Alias Code <span class="text-danger">*</span></label>
-                    <input v-model="formData.itemAlias" class="form-control" type="text" placeholder="Item Alias Code"
-                      required />
+                  <div class="mt-3">
+                    <p class="text-sm mb-2"><strong>Variant Groups:</strong></p>
+                    <div class="d-flex flex-wrap gap-2">
+                      <span v-for="qType in (itemData.quantity_types || [])" :key="qType.quantity_type_id"
+                        class="badge badge-lg" :class="{
+                          'bg-gradient-success': qType.quantity_type.toLowerCase().includes('wholesale'),
+                          'bg-gradient-primary': qType.quantity_type.toLowerCase().includes('retail'),
+                          'bg-gradient-warning': qType.quantity_type.toLowerCase().includes('sample')
+                        }">
+                        {{ qType.quantity_type }}: {{ qType.sub_items?.length || 0 }} variants
+                      </span>
+                    </div>
                   </div>
 
-                  <div class="col-12 col-md-4">
-                    <label class="mt-2">Category <span class="text-danger">*</span></label>
-                    <multiselect v-model="formData.category" :options="categories" placeholder="Select Category"
-                      label="category_name" track-by="category_id" :loading="loadingCategories" />
-                  </div>
-
-                  <div class="col-12 col-md-4">
-                    <label class="mt-2">Brand <span class="text-danger">*</span></label>
-                    <multiselect v-model="formData.brand" :options="brands" placeholder="Select Brand"
-                      label="brand_name" track-by="item_brand_id" :loading="loadingBrands" />
-                  </div>
-
-                  <div class="col-12 col-md-4">
-                    <label class="mt-2">Dealer Name <span class="text-danger">*</span></label>
-                    <input v-model="formData.dealerName" class="form-control" type="text" placeholder="Dealer Name"
-                      required />
-                  </div>
-
-                  <div class="col-12 col-md-4">
-                    <label class="mt-2">Price (₹) <span class="text-danger">*</span></label>
-                    <input v-model.number="formData.price" class="form-control" type="number" step="0.01"
-                      placeholder="Price" required />
-                  </div>
-
-                  <div class="col-12 col-md-4">
-                    <label class="mt-2">Discount (%)</label>
-                    <input v-model.number="formData.discountPercentage" class="form-control" type="number" step="0.01"
-                      placeholder="Discount Percentage (0-100)" min="0" max="100" />
-                  </div>
-
-                  <div class="col-12 col-md-4">
-                    <label class="mt-2">Selling Price (GST Excluded)</label>
-                    <input v-model="sellingPriceWithoutGST" class="form-control" type="number" step="0.01" disabled />
-                  </div>
-
-                  <div class="col-12 col-md-4">
-                    <label class="mt-2">GST Type <span class="text-danger">*</span></label>
-                    <multiselect v-model="formData.gstType" :options="gstOptions" placeholder="Select GST Type"
-                      label="tax_type" track-by="tax_type_id" :loading="loadingTaxTypes" />
-                  </div>
-
-                  <div class="col-12 col-md-4">
-                    <label class="mt-2">Price (GST Included)</label>
-                    <input v-model="sellingPriceWithGST" class="form-control" type="number" step="0.01" disabled />
-                  </div>
-
-                  <div class="col-12 col-md-4">
-                    <label>Item Link</label>
-                    <input v-model="formData.itemLink" class="form-control" type="url"
-                      placeholder="https://example.com/item" />
-                  </div>
-
-                  <div class="col-12 col-md-4 d-flex align-items-center">
-                    <label class="me-3 mb-0">Stock Status:</label>
-                    <div class="form-check form-switch">
-                      <input class="form-check-input" type="checkbox" id="stockStatusSwitch"
-                        v-model="formData.haveStock" />
-                      <label class="form-check-label" for="stockStatusSwitch">
-                        {{ formData.haveStock ? 'Available' : 'Out of Stock' }}
-                      </label>
+                  <!-- Images Preview -->
+                  <div class="mt-3" v-if="itemData.item_image || itemData.sub_images?.length">
+                    <p class="text-sm mb-2"><strong>Images:</strong></p>
+                    <div class="d-flex flex-wrap gap-2">
+                      <div v-if="itemData.item_image" class="position-relative">
+                        <img :src="itemData.item_image" alt="Main" class="item-preview-img" />
+                        <span class="badge badge-sm bg-dark position-absolute" style="top: 4px; left: 4px;">Main</span>
+                      </div>
+                      <div v-for="(img, idx) in (itemData.sub_images || [])" :key="idx" class="position-relative">
+                        <img :src="img" alt="Sub" class="item-preview-img" />
+                        <span class="badge badge-sm bg-secondary position-absolute" style="top: 4px; left: 4px;">{{ idx + 1 }}</span>
+                      </div>
                     </div>
                   </div>
                 </div>
+              </div>
 
-                <div class="mt-3">
-                  <label class="mt-2 d-flex align-items-center justify-content-between">
-                    <span>Item Specification</span>
-                    <button v-if="formData.specifications.length < 10" class="btn btn-sm mb-0 px-3 p-1 ms-2 btn-primary"
-                      type="button" @click="addSpecification">
-                      Add New Spec
-                    </button>
-                  </label>
-                  <div class="card">
+              <!-- Detailed Variants Table -->
+              <div class="card border">
+                <div class="card-header bg-light pb-0">
+                  <h6 class="mb-2">All Variant Combinations</h6>
+                </div>
+                <div class="card-body">
+                  <div v-for="qType in (itemData.quantity_types || [])" :key="qType.quantity_type_id" class="mb-4">
+                    <div class="d-flex align-items-center mb-2">
+                      <h6 class="mb-0 me-2">{{ qType.quantity_type }}</h6>
+                      <span class="badge badge-sm" :class="{
+                        'bg-gradient-success': qType.quantity_type.toLowerCase().includes('wholesale'),
+                        'bg-gradient-primary': qType.quantity_type.toLowerCase().includes('retail'),
+                        'bg-gradient-warning': qType.quantity_type.toLowerCase().includes('sample')
+                      }">
+                        {{ qType.sub_items?.length || 0 }} combinations
+                      </span>
+                    </div>
+                    
+                    <p class="text-xs text-muted mb-2">
+                      Variant Types: {{ qType.variant_types?.map(vt => vt.variant_type).join(', ') || 'None' }}
+                    </p>
+
                     <div class="table-responsive">
-                      <table class="table align-items-center mb-0">
-                        <thead>
+                      <table class="table table-sm table-bordered align-items-center mb-0">
+                        <thead class="bg-light">
                           <tr>
-                            <th>Sl No</th>
-                            <th class="text-center">Specification Head</th>
-                            <th class="text-center">Description</th>
-                            <th class="text-center">Action</th>
+                            <th class="text-xs">#</th>
+                            <th v-for="vt in (qType.variant_types || [])" :key="vt.variant_type_id" class="text-xs">
+                              {{ vt.variant_type }}
+                            </th>
+                            <th class="text-xs">Quantity</th>
+                            <th class="text-xs">Price</th>
+                            <th class="text-xs">Discount %</th>
+                            <th class="text-xs">Tax Type</th>
+                            <th class="text-xs">Tax Included?</th>
+                            <th class="text-xs">Final Price</th>
+                            <th class="text-xs">Status</th>
                           </tr>
                         </thead>
                         <tbody>
-                          <tr v-for="(spec, index) in formData.specifications" :key="`spec-${spec.item_specification_id || index}`">
-                            <td class="align-middle text-center">{{ index + 1 }}</td>
-                            <td class="align-middle text-center">
-                              <input v-model="spec.spec_heading" class="form-control" type="text"
-                                placeholder="Specification" required />
+                          <tr v-for="(subItem, idx) in (qType.sub_items || [])" :key="subItem.sub_item_id">
+                            <td class="text-xs">{{ idx + 1 }}</td>
+                            <td v-for="vt in (qType.variant_types || [])" :key="`var-${vt.variant_type_id}`" class="text-xs">
+                              <span class="badge badge-sm bg-light text-dark border">
+                                {{ getVariantName(vt.variants, subItem.variant_ids) }}
+                              </span>
                             </td>
-                            <td class="align-middle text-center">
-                              <input v-model="spec.description" class="form-control" type="text"
-                                placeholder="Description" required />
+                            <td class="text-xs">{{ subItem.quantity_label }}</td>
+                            <td class="text-xs">₹{{ parseFloat(subItem.price).toFixed(2) }}</td>
+                            <td class="text-xs">{{ subItem.discount }}%</td>
+                            <td class="text-xs">{{ getTaxTypeName(subItem.tax_type_id) }}</td>
+                            <td class="text-xs">
+                              <span :class="['badge badge-xs', subItem.tax_included ? 'badge-success' : 'badge-secondary']">
+                                {{ subItem.tax_included ? 'Yes' : 'No' }}
+                              </span>
                             </td>
-                            <td class="align-middle text-center">
-                              <button type="button" class="btn btn-danger btn-sm px-2 py-1 mb-0"
-                                @click="removeSpecification(index)">
-                                Remove
-                              </button>
+                            <td class="text-xs fw-bold text-success">
+                              ₹{{ parseFloat(subItem.gst_included_price).toFixed(2) }}
                             </td>
-                          </tr>
-                          <tr v-if="formData.specifications.length === 0">
-                            <td colspan="4" class="text-center text-muted py-3">
-                              No specifications added yet.
+                            <td class="text-xs">
+                              <span :class="['badge badge-xs', subItem.status === 1 ? 'badge-success' : 'badge-secondary']">
+                                {{ subItem.status === 1 ? 'Active' : 'Inactive' }}
+                              </span>
                             </td>
                           </tr>
                         </tbody>
@@ -143,652 +176,465 @@
                     </div>
                   </div>
                 </div>
-
-                <div class="row">
-                  <div class="col-12">
-                    <label class="mt-2">Description <span class="text-danger">*</span></label>
-                    <textarea v-model="formData.description" class="form-control" placeholder="Item Description"
-                      rows="3" required></textarea>
-                  </div>
-                  <div class="col-12">
-                    <label class="mt-2">Additional Information</label>
-                    <textarea v-model="formData.additionalInfo" class="form-control"
-                      placeholder="Additional Information" rows="3"></textarea>
-                  </div>
-                </div>
-
-                <div class="row mt-1">
-                  <div class="col-12 col-md-3 mt-4">
-                    <label>Main Image <span class="text-danger">*</span> (Image size - 679x679)</label>
-                    <div class="proof">
-                      <div :class="['imgArea', { active: mainImagePreview }]" :data-title="mainImageFileName"
-                        @click="triggerMainImageUpload">
-                        <input type="file" ref="mainImageInput" @change="handleMainImageUpload" hidden
-                          accept="image/*" />
-                        <template v-if="!mainImagePreview">
-                          <i class="fa-solid fa-cloud-arrow-up"></i>
-                          <h5>Upload image</h5>
-                          <p>image will be resized to <span>679x679</span></p>
-                        </template>
-                        <img v-if="mainImagePreview" :src="mainImagePreview" alt="Main Image Preview"
-                          class="uploaded-image" />
-                      </div>
-                      <small class="text-muted d-block mt-2" v-if="!formData.mainImage && existingMainImage">
-                        <i class="fa fa-check-circle text-success"></i> Current image loaded
-                      </small>
-                      <small class="text-success d-block mt-2" v-if="formData.mainImage">
-                        <i class="fa fa-info-circle"></i> New image will be uploaded
-                      </small>
-                    </div>
-                  </div>
-
-                  <div class="col-12 col-md-9 mt-4">
-                    <div class="d-flex justify-content-between align-items-center">
-                      <h5 class="font-weight-bolder mb-0">Sub Images (Optional) (Image size - 679x679)</h5>
-                      <button type="button" class="btn btn-primary btn-sm" @click="addSubImage">
-                        + Add Sub Image
-                      </button>
-                    </div>
-                    <div class="card card-body py-2">
-
-                      <div class="row" v-if="formData.subImages.length > 0">
-                        <div v-for="(subImage, index) in formData.subImages" :key="`subImage-${subImage.item_image_id || index}`"
-                          class="col-md-4 mt-2">
-                          <div class="sub-image-container">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                              <label class="mb-0">
-                                Sub Image {{ index + 1 }} 
-                              </label>
-                              <button type="button" class="btn btn-danger btn-sm px-2 py-1"
-                                @click="removeSubImage(index)">
-                                Remove
-                              </button>
-                            </div>
-                            <input class="form-control" type="file" @change="handleSubImageUpload(index, $event)"
-                              accept="image/*" />
-                            <div v-if="subImage.preview" class="mt-2">
-                              <img :src="subImage.preview" alt="Sub Image Preview" class="sub-image-preview" />
-                              <small class="text-success d-block mt-1">
-                                <i class="fa fa-info-circle"></i> New image
-                              </small>
-                            </div>
-                            <div v-else-if="subImage.image_url" class="mt-2">
-                              <img :src="subImage.image_url" alt="Existing Sub Image" class="sub-image-preview" />
-                              <small class="text-muted d-block mt-1">
-                                <i class="fa fa-check-circle text-success"></i> Existing image
-                              </small>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div v-else class="text-center py-4 text-muted">
-                        <p>No sub images added yet. Click "Add Sub Image" to add images.</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
               </div>
+
+              <!-- Action Buttons -->
+              <div class="mt-4 d-flex justify-content-end gap-2">
+                <button type="button" class="btn btn-secondary" @click="goBack">
+                  <i class="fas fa-times"></i> Cancel
+                </button>
+                <button type="button" class="btn btn-primary" @click="openEditInAdminItemInfo">
+                  <i class="fas fa-edit"></i> Edit with Form
+                </button>
+              </div>
+
+              <!-- Integration Instructions -->
+              <div class="alert alert-warning border-0 mt-4">
+                <h6 class="mb-2"><i class="fas fa-code me-2"></i>Integration Instructions</h6>
+                <p class="text-sm mb-2">To integrate with your AdminItemInfo component:</p>
+                <pre class="bg-dark text-white p-3 rounded text-xs mb-0"><code>&lt;AdminItemInfo 
+  :editMode="true"
+  :itemId="itemId"
+  :itemData="itemData"
+  @update:success="handleUpdateSuccess"
+  @cancel="goBack"
+/&gt;</code></pre>
+                <p class="text-xs text-muted mt-2 mb-0">
+                  The component will auto-populate all fields, variant groups, and images from itemData
+                </p>
+              </div>
+            </div>
+
+            <!-- Item Not Found -->
+            <div v-else class="text-center py-5">
+              <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+              <h5 class="text-muted">Item Not Found</h5>
+              <p class="text-sm text-muted mb-3">The item you're trying to edit could not be loaded.</p>
+              <button type="button" class="btn btn-primary" @click="goBack">
+                <i class="fas fa-arrow-left"></i> Back to List
+              </button>
             </div>
           </div>
         </div>
-
-        <div class="row mt-3">
-          <div class="col-lg-4">
-            <button type="button" class="btn btn-lg btn-outline-secondary w-100" @click="cancelEdit">
-              Cancel
-            </button>
-          </div>
-          <div class="col-lg-4 ms-auto">
-            <button type="submit" class="btn btn-lg bg-gradient-dark w-100" :disabled="isSubmitting">
-              {{ isSubmitting ? "Updating..." : "Update Item" }}
-            </button>
-          </div>
-        </div>
-      </form>
+      </div>
     </div>
   </div>
 </template>
 
-<script>
-import { ref, reactive, computed, onMounted } from "vue";
-import { useRouter, useRoute } from "vue-router";
-import Multiselect from "vue-multiselect";
-import { api } from "@/services/api";
+<script setup>
+import { ref, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+// import { api } from '@/services/api'
 
-export default {
-  name: "AdminItemEdit",
-  components: { Multiselect },
-  setup() {
-    const router = useRouter();
-    const route = useRoute();
-    const itemId = ref(route.params.id || null);
-    const mainImageInput = ref(null);
-    const mainImagePreview = ref("");
-    const mainImageFileName = ref("");
-    const existingMainImage = ref("");
-    const isSubmitting = ref(false);
-    const isLoading = ref(true);
+const router = useRouter()
+const route = useRoute()
 
-    // Loading states
-    const loadingCategories = ref(false);
-    const loadingBrands = ref(false);
-    const loadingTaxTypes = ref(false);
+const itemId = ref(route.params.id)
+const loading = ref(false)
+const itemData = ref(null)
 
-    const categories = ref([]);
-    const brands = ref([]);
-    const gstOptions = ref([]);
+const categories = ref([])
+const taxTypes = ref([])
 
-    const formData = reactive({
-      itemName: "",
-      itemAlias: "",
-      brand: null,
-      category: null,
-      dealerName: "",
-      gstType: null,
-      price: 0,
-      discountPercentage: 0,
-      description: "",
-      additionalInfo: "",
-      itemLink: "",
-      mainImage: null,
-      subImages: [],
-      haveStock: true,
-      specifications: [],
-    });
+// ── Lifecycle ──────────────────────────────────────────────────────────────────
+onMounted(async () => {
+  await fetchCategories()
+  await fetchTaxTypes()
+  await fetchItemData()
+})
 
-    const sellingPriceWithoutGST = computed(() => {
-      const price = parseFloat(formData.price) || 0;
-      let discount = parseFloat(formData.discountPercentage) || 0;
+// ── API Calls (Commented - Using Dummy Data) ──────────────────────────────────
+const fetchCategories = async () => {
+  // try {
+  //   const response = await api.get('/v1/admin/category/active')
+  //   if (response.data.success) categories.value = response.data.data
+  // } catch (error) {
+  //   console.error('Error fetching categories:', error)
+  // }
 
-      if (discount < 0) discount = 0;
-      if (discount > 100) discount = 100;
+  // DUMMY DATA
+  categories.value = [
+    { category_id: 1, category_name: 'Coffee', category_code: 'COF' },
+    { category_id: 2, category_name: 'Spices', category_code: 'SPC' },
+    { category_id: 3, category_name: 'Tea', category_code: 'TEA' }
+  ]
+}
 
-      const discountFactor = 1 - (discount / 100);
-      return (price * discountFactor).toFixed(2);
-    });
+const fetchTaxTypes = async () => {
+  // try {
+  //   const response = await api.get('/v1/admin/tax-type/active')
+  //   if (response.data.success) taxTypes.value = response.data.data
+  // } catch (error) {
+  //   console.error('Error fetching tax types:', error)
+  // }
 
-    const sellingPriceWithGST = computed(() => {
-      const priceAfterDiscount = parseFloat(sellingPriceWithoutGST.value) || 0;
+  // DUMMY DATA
+  taxTypes.value = [
+    { tax_type_id: 1, tax_type: 'GST 5%', tax: '5' },
+    { tax_type_id: 2, tax_type: 'GST 12%', tax: '12' },
+    { tax_type_id: 3, tax_type: 'GST 18%', tax: '18' }
+  ]
+}
 
-      if (priceAfterDiscount === 0 || !formData.gstType) return "0.00";
+const fetchItemData = async () => {
+  loading.value = true
 
-      const gstPercentage = parseFloat(formData.gstType.tax || 0);
-      const gstAmount = (priceAfterDiscount * gstPercentage) / 100;
-      return (priceAfterDiscount + gstAmount).toFixed(2);
-    });
+  // try {
+  //   const response = await api.get(`/v1/admin/item/${itemId.value}`)
+  //   if (response.data.success) {
+  //     itemData.value = response.data.data
+  //   } else {
+  //     alert('Failed to load item data')
+  //     router.push('/admin/items')
+  //   }
+  // } catch (error) {
+  //   console.error('Error fetching item:', error)
+  //   alert('Error loading item data')
+  //   router.push('/admin/items')
+  // } finally {
+  //   loading.value = false
+  // }
 
-    // --- Data Fetching ---
-    const fetchCategories = async () => {
-      loadingCategories.value = true;
-      try {
-        const response = await api.get("/v1/admin/category/active");
-        if (response.data.success) {
-          categories.value = response.data.data;
-        }
-      } catch (error) {
-        console.error("Error fetching categories:", error);
-        alert("Failed to load categories");
-      } finally {
-        loadingCategories.value = false;
-      }
-    };
-
-    const fetchBrands = async () => {
-      loadingBrands.value = true;
-      try {
-        const response = await api.get("/v1/admin/item-brand/active");
-        if (response.data.success) {
-          brands.value = response.data.data;
-        }
-      } catch (error) {
-        console.error("Error fetching brands:", error);
-        alert("Failed to load brands");
-      } finally {
-        loadingBrands.value = false;
-      }
-    };
-
-    const fetchTaxTypes = async () => {
-      loadingTaxTypes.value = true;
-      try {
-        const response = await api.get("/v1/admin/tax-type/active");
-        if (response.data.success) {
-          gstOptions.value = response.data.data;
-        }
-      } catch (error) {
-        console.error("Error fetching tax types:", error);
-        alert("Failed to load tax types");
-      } finally {
-        loadingTaxTypes.value = false;
-      }
-    };
-
-    const fetchItemData = async () => {
-      if (!itemId.value) {
-        alert("No item ID provided");
-        router.push("/admin/item-list");
-        return;
-      }
-
-      isLoading.value = true;
-      try {
-        // Fetch all dropdown data first
-        await Promise.all([
-          fetchCategories(),
-          fetchBrands(),
-          fetchTaxTypes()
-        ]);
-
-        // Now fetch item data
-        const response = await api.get(`/v1/admin/item/view/${itemId.value}`);
-        
-        if (response.data.success) {
-          const item = response.data.data;
-          
-          // Populate form data
-          formData.itemName = item.item_name || "";
-          formData.itemAlias = item.item_alias_code || "";
-          formData.dealerName = item.dealer_name || "";
-          formData.price = parseFloat(item.price) || 0;
-          formData.discountPercentage = parseFloat(item.discount) || 0;
-          formData.description = item.description || "";
-          formData.additionalInfo = item.additional_information || "";
-          formData.itemLink = item.item_link || "";
-          formData.haveStock = item.have_stock === 1;
-
-          // Set main image preview
-          if (item.item_image_url) {
-            mainImagePreview.value = item.item_image_url;
-            existingMainImage.value = item.item_image_path || item.item_image_url;
-          }
-
-          // Load specifications
-          if (item.specifications && item.specifications.length > 0) {
-            formData.specifications = item.specifications.map(spec => ({
-              item_specification_id: spec.item_specification_id,
-              spec_heading: spec.spec_heading || "",
-              description: spec.description || ""
-            }));
-          }
-
-          // Load gallery/sub images
-          if (item.gallery_images && item.gallery_images.length > 0) {
-            formData.subImages = item.gallery_images.map(img => ({
-              item_image_id: img.item_image_id,
-              file: null,
-              preview: null,
-              image_url: img.image_url,
-              image_path: img.image_path
-            }));
-          }
-
-          // Set selected category
-          formData.category = categories.value.find(c => c.category_id === item.category_id) || null;
-          
-          // Set selected brand
-          formData.brand = brands.value.find(b => b.item_brand_id === item.item_brand_id) || null;
-          
-          // Set selected GST type
-          formData.gstType = gstOptions.value.find(g => g.tax_type_id === item.tax_type_id) || null;
-
-        } else {
-          alert("Failed to load item data");
-          router.push("/admin/item-list");
-        }
-      } catch (error) {
-        console.error("Error fetching item data:", error);
-        alert("Error loading item data: " + (error.response?.data?.message || error.message));
-        router.push("/admin/item-list");
-      } finally {
-        isLoading.value = false;
-      }
-    };
-
-    // --- Image Uploads and Resizing ---
-    const fileTypes = [
-      "image/apng", "image/bmp", "image/gif", "image/jpeg", "image/png", "image/webp", "image/avif",
-    ];
-    const validFileType = (file) => fileTypes.includes(file.type);
-    const showAlert = (msg) => alert(msg);
-    const triggerMainImageUpload = () => mainImageInput.value?.click();
-
-    const resizeImage = (file, targetWidth, targetHeight, quality = 0.9) => {
-      return new Promise((resolve, reject) => {
-        if (!file || !file.type.startsWith('image/')) {
-          reject(new Error('File is not an image.'));
-          return;
-        }
-
-        const reader = new FileReader();
-        reader.onload = (readerEvent) => {
-          const image = new Image();
-          image.onload = () => {
-            let canvas = document.createElement('canvas');
-            let ctx = canvas.getContext('2d');
-
-            canvas.width = targetWidth;
-            canvas.height = targetHeight;
-
-            ctx.fillStyle = "#FFFFFF";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            let imageRatio = image.width / image.height;
-            let targetRatio = targetWidth / targetHeight;
-
-            let drawWidth;
-            let drawHeight;
-            let xOffset = 0;
-            let yOffset = 0;
-
-            if (imageRatio > targetRatio) {
-              drawWidth = targetWidth;
-              drawHeight = targetWidth / imageRatio;
-              yOffset = (targetHeight - drawHeight) / 2;
-            } else {
-              drawHeight = targetHeight;
-              drawWidth = targetHeight * imageRatio;
-              xOffset = (targetWidth - drawWidth) / 2;
+  // DUMMY DATA - Comprehensive example matching AdminItemInfo structure
+  setTimeout(() => {
+    itemData.value = {
+      item_id: 1,
+      item_name: 'Premium Arabica Coffee Blend',
+      item_alias_code: 'COFFEE-ARB-001',
+      category_id: 1,
+      description: 'Premium blended coffee sourced from the finest Arabica beans across South America and Africa. Perfect for espresso and drip brewing.',
+      additional_information: 'Best served hot. Store in a cool, dry place away from direct sunlight. Once opened, consume within 30 days for optimal freshness.',
+      item_image: 'https://images.unsplash.com/photo-1447933601403-0c6688de566e?w=400&h=400&fit=crop',
+      sub_images: [
+        'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400&h=400&fit=crop',
+        'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=400&h=400&fit=crop'
+      ],
+      status: 1,
+      created_at: '2024-01-15 10:30:00',
+      updated_at: '2024-03-09 14:45:00',
+      
+      // Quantity Types with Variants (Matching your structure)
+      quantity_types: [
+        {
+          quantity_type_id: 1,
+          quantity_type: 'Wholesale',
+          variant_types: [
+            {
+              variant_type_id: 1,
+              variant_type: 'Bean Type',
+              variants: [
+                { variant_id: 1, variant: 'Arabica 100%' },
+                { variant_id: 2, variant: 'Robusta 100%' },
+                { variant_id: 3, variant: 'Arabica-Robusta Blend' }
+              ]
+            },
+            {
+              variant_type_id: 2,
+              variant_type: 'Roast Level',
+              variants: [
+                { variant_id: 4, variant: 'Light Roast' },
+                { variant_id: 5, variant: 'Medium Roast' },
+                { variant_id: 6, variant: 'Dark Roast' }
+              ]
             }
-
-            ctx.drawImage(image, xOffset, yOffset, drawWidth, drawHeight);
-
-            canvas.toBlob((blob) => {
-              if (blob) {
-                const resizedFile = new File([blob], file.name, {
-                  type: 'image/jpeg',
-                  lastModified: Date.now()
-                });
-                resolve({ file: resizedFile, preview: canvas.toDataURL('image/jpeg', quality) });
-              } else {
-                reject(new Error('Canvas to Blob conversion failed.'));
-              }
-            }, 'image/jpeg', quality);
-          };
-          image.onerror = reject;
-          image.src = readerEvent.target.result;
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-    };
-
-    const handleMainImageUpload = async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      if (!validFileType(file)) {
-        showAlert("Invalid file type. Please upload an image (JPG, PNG, GIF, etc.).");
-        return;
-      }
-
-      try {
-        const resized = await resizeImage(file, 679, 679, 1);
-        mainImagePreview.value = resized.preview;
-        mainImageFileName.value = file.name;
-        formData.mainImage = resized.file;
-      } catch (error) {
-        console.error("Error processing main image:", error);
-        showAlert("Failed to process main image. " + error.message);
-        mainImagePreview.value = "";
-        mainImageFileName.value = "";
-        formData.mainImage = null;
-      }
-    };
-
-    const addSubImage = () => formData.subImages.push({ file: null, preview: null, image_url: null });
-    
-    const removeSubImage = (i) => {
-      if (formData.subImages[i].item_image_id) {
-        if (confirm("Are you sure you want to remove this existing image?")) {
-          formData.subImages.splice(i, 1);
-        }
-      } else {
-        formData.subImages.splice(i, 1);
-      }
-    };
-
-    const handleSubImageUpload = async (i, e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      if (!validFileType(file)) {
-        showAlert("Invalid file type for sub-image. Please upload an image.");
-        return;
-      }
-
-      try {
-        const resized = await resizeImage(file, 679, 679, 0.7);
-        formData.subImages[i].file = resized.file;
-        formData.subImages[i].preview = resized.preview;
-      } catch (error) {
-        console.error(`Error processing sub image ${i}:`, error);
-        showAlert(`Failed to process sub image ${i}. ` + error.message);
-        formData.subImages[i].file = null;
-        formData.subImages[i].preview = null;
-      }
-    };
-
-    // --- Specification Management ---
-    const addSpecification = () => {
-      if (formData.specifications.length < 10) {
-        formData.specifications.push({ spec_heading: "", description: "" });
-      }
-    };
-    
-    const removeSpecification = (i) => {
-      if (formData.specifications[i].item_specification_id) {
-        if (confirm("Are you sure you want to remove this specification?")) {
-          formData.specifications.splice(i, 1);
-        }
-      } else {
-        formData.specifications.splice(i, 1);
-      }
-    };
-
-    // --- Form Submission ---
-    const submitForm = async () => {
-      if (!formData.itemName || !formData.itemAlias || !formData.category || !formData.brand || !formData.gstType) {
-        alert("Please fill in all required fields.");
-        return;
-      }
-
-      isSubmitting.value = true;
-
-      try {
-        const formDataToSend = new FormData();
-
-        formDataToSend.append('_method', 'post');
-        formDataToSend.append('item_name', formData.itemName);
-        formDataToSend.append('item_alias_code', formData.itemAlias);
-        formDataToSend.append('category_id', formData.category.category_id);
-        formDataToSend.append('item_brand_id', formData.brand.item_brand_id);
-        formDataToSend.append('dealer_name', formData.dealerName);
-        formDataToSend.append('tax_type_id', formData.gstType.tax_type_id);
-        formDataToSend.append('price', parseFloat(formData.price));
-        formDataToSend.append('discount', parseFloat(formData.discountPercentage || 0));
-        formDataToSend.append('tax_excluded_price', parseFloat(sellingPriceWithoutGST.value));
-        formDataToSend.append('tax_included_price', parseFloat(sellingPriceWithGST.value));
-        formDataToSend.append('item_link', formData.itemLink);
-        formDataToSend.append('have_stock', formData.haveStock ? 1 : 0);
-        formDataToSend.append('description', formData.description);
-        formDataToSend.append('additional_information', formData.additionalInfo || "");
-
-        // Append main image only if a new one was uploaded
-        if (formData.mainImage) {
-          formDataToSend.append('item_image', formData.mainImage, formData.mainImage.name);
-        }
-
-        // Append sub images
-        formData.subImages.forEach((subImage, index) => {
-          if (subImage.file) {
-            // New image uploaded
-            formDataToSend.append(`images[${index}][image]`, subImage.file, subImage.file.name);
-          }
-          if (subImage.item_image_id) {
-            // Existing image ID
-            formDataToSend.append(`images[${index}][item_image_id]`, subImage.item_image_id);
-          }
-        });
-
-        // Append specifications
-        formData.specifications
-          .filter(spec => spec.spec_heading && spec.description)
-          .forEach((spec, index) => {
-            formDataToSend.append(`specifications[${index}][spec_heading]`, spec.spec_heading);
-            formDataToSend.append(`specifications[${index}][description]`, spec.description);
-            if (spec.item_specification_id) {
-              formDataToSend.append(`specifications[${index}][id]`, spec.item_specification_id);
+          ],
+          sub_items: [
+            {
+              sub_item_id: 1,
+              quantity: '1.00',
+              unit_id: 1,
+              unit: 'KG',
+              quantity_label: '1.00 KG',
+              price: '450.00',
+              discount: '10.00',
+              gst_included_price: '425.25',
+              gst_excluded_price: '405.00',
+              tax_type_id: 1,
+              tax_included: false,
+              variant_ids: [1, 4],
+              status: 1
+            },
+            {
+              sub_item_id: 2,
+              quantity: '1.00',
+              unit_id: 1,
+              unit: 'KG',
+              quantity_label: '1.00 KG',
+              price: '480.00',
+              discount: '10.00',
+              gst_included_price: '453.60',
+              gst_excluded_price: '432.00',
+              tax_type_id: 1,
+              tax_included: false,
+              variant_ids: [1, 5],
+              status: 1
+            },
+            {
+              sub_item_id: 3,
+              quantity: '1.00',
+              unit_id: 1,
+              unit: 'KG',
+              quantity_label: '1.00 KG',
+              price: '510.00',
+              discount: '10.00',
+              gst_included_price: '481.95',
+              gst_excluded_price: '459.00',
+              tax_type_id: 1,
+              tax_included: false,
+              variant_ids: [1, 6],
+              status: 1
+            },
+            {
+              sub_item_id: 4,
+              quantity: '1.00',
+              unit_id: 1,
+              unit: 'KG',
+              quantity_label: '1.00 KG',
+              price: '420.00',
+              discount: '5.00',
+              gst_included_price: '418.95',
+              gst_excluded_price: '399.00',
+              tax_type_id: 1,
+              tax_included: false,
+              variant_ids: [2, 4],
+              status: 0
+            },
+            {
+              sub_item_id: 5,
+              quantity: '1.00',
+              unit_id: 1,
+              unit: 'KG',
+              quantity_label: '1.00 KG',
+              price: '445.00',
+              discount: '5.00',
+              gst_included_price: '443.89',
+              gst_excluded_price: '422.75',
+              tax_type_id: 1,
+              tax_included: false,
+              variant_ids: [2, 5],
+              status: 1
+            },
+            {
+              sub_item_id: 6,
+              quantity: '1.00',
+              unit_id: 1,
+              unit: 'KG',
+              quantity_label: '1.00 KG',
+              price: '400.00',
+              discount: '8.00',
+              gst_included_price: '386.40',
+              gst_excluded_price: '368.00',
+              tax_type_id: 1,
+              tax_included: false,
+              variant_ids: [3, 4],
+              status: 1
             }
-          });
-
-        const response = await api.post(`/v1/admin/item/update/${itemId.value}`, formDataToSend, {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        });
-
-        if (response.data.success) {
-          alert("Item updated successfully!");
-          router.push("/admin/item-list");
-        } else {
-          alert(response.data.message || "Failed to update item");
+          ]
+        },
+        {
+          quantity_type_id: 2,
+          quantity_type: 'Retail',
+          variant_types: [
+            {
+              variant_type_id: 1,
+              variant_type: 'Bean Type',
+              variants: [
+                { variant_id: 1, variant: 'Arabica 100%' },
+                { variant_id: 2, variant: 'Robusta 100%' }
+              ]
+            },
+            {
+              variant_type_id: 2,
+              variant_type: 'Roast Level',
+              variants: [
+                { variant_id: 4, variant: 'Light Roast' },
+                { variant_id: 5, variant: 'Medium Roast' }
+              ]
+            }
+          ],
+          sub_items: [
+            {
+              sub_item_id: 7,
+              quantity: '0.50',
+              unit_id: 1,
+              unit: 'KG',
+              quantity_label: '0.50 KG',
+              price: '250.00',
+              discount: '0.00',
+              gst_included_price: '262.50',
+              gst_excluded_price: '250.00',
+              tax_type_id: 1,
+              tax_included: false,
+              variant_ids: [1, 4],
+              status: 1
+            },
+            {
+              sub_item_id: 8,
+              quantity: '0.50',
+              unit_id: 1,
+              unit: 'KG',
+              quantity_label: '0.50 KG',
+              price: '270.00',
+              discount: '0.00',
+              gst_included_price: '283.50',
+              gst_excluded_price: '270.00',
+              tax_type_id: 1,
+              tax_included: false,
+              variant_ids: [1, 5],
+              status: 1
+            },
+            {
+              sub_item_id: 9,
+              quantity: '0.50',
+              unit_id: 1,
+              unit: 'KG',
+              quantity_label: '0.50 KG',
+              price: '240.00',
+              discount: '0.00',
+              gst_included_price: '252.00',
+              gst_excluded_price: '240.00',
+              tax_type_id: 1,
+              tax_included: false,
+              variant_ids: [2, 4],
+              status: 1
+            },
+            {
+              sub_item_id: 10,
+              quantity: '0.50',
+              unit_id: 1,
+              unit: 'KG',
+              quantity_label: '0.50 KG',
+              price: '255.00',
+              discount: '0.00',
+              gst_included_price: '267.75',
+              gst_excluded_price: '255.00',
+              tax_type_id: 1,
+              tax_included: false,
+              variant_ids: [2, 5],
+              status: 1
+            }
+          ]
+        },
+        {
+          quantity_type_id: 3,
+          quantity_type: 'Sample',
+          variant_types: [
+            {
+              variant_type_id: 1,
+              variant_type: 'Bean Type',
+              variants: [
+                { variant_id: 1, variant: 'Arabica 100%' }
+              ]
+            }
+          ],
+          sub_items: [
+            {
+              sub_item_id: 11,
+              quantity: '1.00',
+              unit_id: 2,
+              unit: 'Packet',
+              quantity_label: '1.00 Packet',
+              price: '50.00',
+              discount: '0.00',
+              gst_included_price: '52.50',
+              gst_excluded_price: '50.00',
+              tax_type_id: 1,
+              tax_included: false,
+              variant_ids: [1],
+              status: 1
+            }
+          ]
         }
-      } catch (error) {
-        console.error("Error submitting form:", error);
-        const errorMessage = error.response?.data?.message || "Error updating item. Please try again.";
-        alert(errorMessage);
-      } finally {
-        isSubmitting.value = false;
-      }
-    };
+      ]
+    }
 
-    const cancelEdit = () => {
-      if (confirm("Are you sure you want to cancel? All unsaved changes will be lost.")) {
-        router.push("/admin/item-list");
-      }
-    };
+    loading.value = false
+    console.log('Item data loaded for edit:', itemData.value)
+  }, 800)
+}
 
-    onMounted(() => {
-      fetchItemData();
-    });
+// ── Helper Functions ───────────────────────────────────────────────────────────
+const getCategoryName = (categoryId) => {
+  const cat = categories.value.find(c => c.category_id == categoryId)
+  return cat?.category_name || 'Unknown'
+}
 
-    return {
-      itemId,
-      mainImageInput,
-      mainImagePreview,
-      mainImageFileName,
-      existingMainImage,
-      isSubmitting,
-      isLoading,
-      formData,
-      categories,
-      brands,
-      gstOptions,
-      loadingCategories,
-      loadingBrands,
-      loadingTaxTypes,
-      sellingPriceWithGST,
-      sellingPriceWithoutGST,
-      triggerMainImageUpload,
-      handleMainImageUpload,
-      addSubImage,
-      removeSubImage,
-      handleSubImageUpload,
-      addSpecification,
-      removeSpecification,
-      submitForm,
-      cancelEdit,
-    };
-  },
-};
+const getTaxTypeName = (taxTypeId) => {
+  if (!taxTypeId) return 'No Tax'
+  const tax = taxTypes.value.find(t => t.tax_type_id == taxTypeId)
+  return tax?.tax_type || `Tax ${taxTypeId}`
+}
+
+const getVariantName = (variants, variantIds) => {
+  const matchedVariants = variants.filter(v => variantIds.includes(v.variant_id))
+  return matchedVariants.map(v => v.variant).join(', ') || '—'
+}
+
+// ── Actions ────────────────────────────────────────────────────────────────────
+const goBack = () => {
+  router.push('/admin/items')
+}
+
+const openEditInAdminItemInfo = () => {
+  alert('In production: Navigate to edit form view with AdminItemInfo component in edit mode')
+  // In real implementation:
+  // You would either:
+  // 1. Show AdminItemInfo component on this page, OR
+  // 2. Navigate to a separate edit form route that uses AdminItemInfo
+}
+
+const handleUpdateSuccess = () => {
+  alert('Item updated successfully!')
+  router.push('/admin/items')
+}
 </script>
 
 <style scoped>
-.imgArea {
-  border: 2px dashed #ddd;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  position: relative;
-  min-height: 150px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background-color: #f8f9fa;
-  overflow: hidden;
-}
-
-.imgArea:hover {
-  border-color: #007bff;
-  background-color: #f8f9ff;
-}
-
-.imgArea.active {
-  border-color: #28a745;
-  background-color: #f8fff8;
-}
-
-.imgArea i {
-  font-size: 3rem;
-  color: #6c757d;
-  margin-bottom: 1rem;
-}
-
-.uploaded-image {
-  max-width: 100%;
-  max-height: 200px;
+.item-preview-img {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
   border-radius: 8px;
-  object-fit: contain;
-  width: 100%;
-  height: 100%;
+  border: 2px solid #e9ecef;
 }
 
-.sub-image-container {
-  border: 1px solid #e9ecef;
-  border-radius: 8px;
-  padding: 15px;
-  background-color: #f8f9fa;
+.badge-lg {
+  padding: 6px 12px;
+  font-size: 0.8rem;
 }
 
-.sub-image-preview {
-  width: 100%;
-  max-height: 120px;
-  border-radius: 6px;
-  object-fit: contain;
-}
-
-.card {
-  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-  border: 1px solid #e9ecef;
-}
-
-.card-body {
-  padding: 1.5rem;
-}
-
-.btn:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-}
-
-label {
+.badge-xs {
+  padding: 2px 6px;
+  font-size: 0.65rem;
   font-weight: 600;
-  color: #495057;
-  margin-bottom: 0.5rem;
 }
 
-.text-muted {
-  color: #6c757d !important;
+.badge-success {
+  background-color: #28a745;
+  color: white;
 }
 
-.text-danger {
-  color: #dc3545 !important;
+.badge-danger {
+  background-color: #dc3545;
+  color: white;
 }
 
-.badge {
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
+.badge-secondary {
+  background-color: #6c757d;
+  color: white;
+}
+
+.spinner-border {
+  width: 3rem;
+  height: 3rem;
+}
+
+pre {
+  margin-bottom: 0;
+}
+
+code {
+  font-family: 'Courier New', monospace;
+  font-size: 0.85rem;
 }
 </style>

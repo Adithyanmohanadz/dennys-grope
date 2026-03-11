@@ -146,7 +146,7 @@ const navigationItems = ref([
   },
   {
     name: "Users",
-    routeName: ["admin-user-list", "admin-user-creation"],
+    routeName: ["admin-user-list", "admin-user-creation", "admin-user-edit", "admin-user-wholesale-list", "admin-user-wholesale-edit", "admin-user-wholesale-view"],
     path: "/admin/user-list",
     icon: "fa fa-user",
   },

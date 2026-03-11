@@ -35,6 +35,14 @@ const router = createRouter({
             ),
         },
         {
+          path: "wholesale-registration",
+          name: "wholesale-registration",
+          component: () =>
+            import(
+              /* webpackChunkName: "wholesale-registration" */ "@/views/website/WholesaleRegistrationPage.vue"
+            ),
+        },
+        {
           path: "product/:id",
           name: "Product",
           component: () => import(/* webpackChunkName: "product" */ "@/views/website/Product.vue"),
@@ -243,6 +251,20 @@ const router = createRouter({
           name: "admin-user-edit",
           component: () =>
             import(/* webpackChunkName: "admin-users" */ "@/views/admin/UserEdit.vue"),
+          meta: { requiresAuth: true },
+        },
+        {
+          path: "user-wholesale-list",
+          name: "admin-user-wholesale-list",
+          component: () =>
+            import(/* webpackChunkName: "admin-users" */ "@/views/admin/UserWholesaleList.vue"),
+          meta: { requiresAuth: true },
+        },
+        {
+          path: "user-wholesale-view/:id",
+          name: "admin-user-wholesale-view",
+          component: () =>
+            import(/* webpackChunkName: "admin-users" */ "@/views/admin/UserWholesaleView.vue"),
           meta: { requiresAuth: true },
         },
         {

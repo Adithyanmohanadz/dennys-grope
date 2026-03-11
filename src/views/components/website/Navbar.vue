@@ -384,6 +384,10 @@ onMounted(async () => {
 
     fetchCategories();
 
+    emitter.on("user-logged-in", () => {
+  loadUserData();
+});
+
     // cart-updated is emitted by ShopPage after every successful addToCart.
     // For guests it refreshes from localStorage; for logged-in users from the API.
     emitter.on('cart-updated', () => {
@@ -410,6 +414,7 @@ onUnmounted(() => {
     window.removeEventListener('storage', loadUserData);
     window.removeEventListener('click', handleClickOutside);
     emitter.off('cart-updated');
+    emitter.off("user-logged-in");
 });
 </script>
 

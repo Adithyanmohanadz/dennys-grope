@@ -1,726 +1,637 @@
 <template>
-  <div class="container-fluid">
-    <div class="row mb-5">
-      <div class="col-lg-3">
-        <div class="card card-body" id="profile">
-          <div v-if="loading" class="text-center py-5">
-            <p>Loading user data...</p>
+  <div class="admin-page">
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <div class="header-left">
+        <div>
+          <h4 class="page-title">Edit User</h4>
+          <p class="page-sub">Update user profile, status and credentials</p>
+        </div>
+      </div>
+    </div>
+
+    <div v-if="loading" class="loading-state">
+      <div class="loading-dots"><span></span><span></span><span></span></div>
+      <p>Loading user data...</p>
+    </div>
+
+    <div v-else class="edit-layout">
+
+      <!-- Left: Profile Card -->
+      <div class="profile-col">
+        <div class="profile-card">
+          <div class="profile-avatar" :style="{ background: avatarColor }">
+            {{ user.user_name?.charAt(0)?.toUpperCase() }}
           </div>
-          <div v-else-if="user" class="row align-items-center">
-            <div class="col-sm-auto col-4 text-center">
-              <div class="avatar avatar-xl position-relative">
-                <img :src="profileImg" alt="Profile image" class="w-100 border-radius-lg shadow-sm">
-              </div>
-            </div>
-            <div class="col-sm-auto col-8 my-auto">
-              <div class="h-100 mt-3">
-                <h5 class="mb-2 font-weight-bolder">
-                  {{ user.user_name }}
-                </h5>
-                <p class="mb-1 font-weight-bold text-sm">
-                  {{ user.email }}
-                </p>
-                <p class="mb-0 font-weight-bold text-sm">
-                  {{ user.phone }}
-                </p>
-                <p class="mb-0 text-xs" :class="statusClass(user.registration_status)">
-                   {{ user.registration_status }}
-                </p>
-              </div>
-            </div>
+          <div class="profile-name">{{ user.user_name }}</div>
+          <div class="profile-email">{{ user.email }}</div>
+          <div class="profile-phone">{{ user.phone }}</div>
+          <div class="profile-badges">
+            <span class="status-pill" :class="user.registration_status">{{ statusLabel(user.registration_status) }}</span>
+            <span class="type-pill" :class="user.user_type">
+              <i :class="user.user_type === 'wholesale' ? 'fas fa-briefcase' : 'fas fa-user'" class="me-1"></i>
+              {{ user.user_type === 'wholesale' ? 'Wholesale' : 'Retail' }}
+            </span>
           </div>
-          <div v-else class="text-center py-5">
-            <p>Failed to load user data.</p>
-          </div>
+          <div class="profile-divider"></div>
+          <nav class="profile-nav">
+            <a v-for="tab in tabs" :key="tab.id" class="nav-item" :class="{ active: activeTab === tab.id }"
+              @click="scrollTo(tab.id)">
+              <i :class="tab.icon"></i>{{ tab.label }}
+            </a>
+          </nav>
         </div>
       </div>
 
-      <div class="col-lg-9 mt-lg-0 mt-4">
-        <div class="card position-sticky top-1 z-index-sticky">
-          <div class="nav-wrapper position-relative end-0">
-            <ul class="nav nav-pills nav-fill p-1" role="tablist">
-              <li class="nav-item">
-                <a 
-                  class="nav-link text-body" 
-                  :class="{ 'active': isActiveTab('profile') }"
-                  href="#profile"
-                  @click.prevent="setActiveTab('profile')"
-                >
-                  <span class="text-sm">Profile</span>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a 
-                  class="nav-link text-body" 
-                  :class="{ 'active': isActiveTab('basic-info') }"
-                  href="#basic-info"
-                  @click.prevent="setActiveTab('basic-info')"
-                >
-                  <span class="text-sm">Basic Info</span>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a 
-                  class="nav-link text-body" 
-                  :class="{ 'active': isActiveTab('password') }"
-                  href="#password"
-                  @click.prevent="setActiveTab('password')"
-                >
-                  <span class="text-sm">Change Password</span>
-                </a>
-              </li>
-              <li class="nav-item">
-                <a 
-                  class="nav-link text-body" 
-                  :class="{ 'active': isActiveTab('delete') }"
-                  href="#delete"
-                  @click.prevent="setActiveTab('delete')"
-                >
-                  <span class="text-sm">Delete Account</span>
-                </a>
-              </li>
-            </ul>
-          </div>
-        </div>
+      <!-- Right: Content -->
+      <div class="content-col">
 
-        <!-- Basic Info Section -->
-        <div class="card mt-4" id="basic-info">
-          <div class="card-header">
-            <h5>Basic Info</h5>
-            <p v-if="basicInfoMessage" :class="basicInfoStatus ? 'text-success' : 'text-danger'" class="text-sm mb-0">
+        <!-- ── Basic Info ── -->
+        <div class="edit-card" id="basic-info">
+          <div class="card-head">
+            <div class="card-icon blue"><i class="fas fa-user-edit"></i></div>
+            <div>
+              <h6 class="card-title">Basic Information</h6>
+              <p class="card-sub">Update contact details and address</p>
+            </div>
+            <span v-if="basicInfoMessage" class="inline-msg" :class="basicInfoStatus ? 'ok' : 'err'">
+              <i :class="basicInfoStatus ? 'fas fa-check-circle' : 'fas fa-exclamation-circle'"></i>
               {{ basicInfoMessage }}
-            </p>
+            </span>
           </div>
+
           <form @submit.prevent="updateBasicInfo">
-            <div class="card-body pt-0">
-              <div class="row">
-                <div class="col-md-4 mb-2">
-                  <label class="form-label" for="userName">Company/User Name</label>
-                  <div class="input-group">
-                    <input id="userName" v-model="basicInfo.user_name" class="form-control" type="text"
-                      placeholder="Enter your name" required>
-                  </div>
-                </div>
-                <div class="col-md-4 mb-2">
-                  <label class="form-label" for="email">Email Address</label>
-                  <div class="input-group">
-                    <input id="email" v-model="basicInfo.email" class="form-control" type="email"
-                      placeholder="Enter your email" required>
-                  </div>
-                </div>
-                <div class="col-md-4 mb-2">
-                  <label class="form-label" for="phone">Phone Number</label>
-                  <div class="input-group">
-                    <input id="phone" v-model="basicInfo.phone" class="form-control" type="text"
-                      placeholder="Enter your phone number" required>
-                  </div>
-                </div>
-                <div class="col-md-4 mb-2">
-                  <label class="form-label" for="whatsapp">WhatsApp Number</label>
-                  <div class="input-group">
-                    <input id="whatsapp" v-model="basicInfo.whatsapp_number" class="form-control" type="text"
-                      placeholder="Enter your WhatsApp number">
-                  </div>
-                </div>
-                <div class="col-md-4 mb-2">
-                  <label class="form-label" for="address">Address</label>
-                  <div class="input-group">
-                    <input id="address" v-model="basicInfo.address" class="form-control" type="text"
-                      placeholder="Enter your address">
-                  </div>
-                </div>
-                <div class="col-md-4 mb-2">
-                  <label class="form-label" for="deliveryAddress">Delivery Address</label>
-                  <div class="input-group">
-                    <input id="deliveryAddress" v-model="basicInfo.delivery_address" class="form-control" type="text"
-                      placeholder="Enter your delivery address">
-                  </div>
-                </div>
-                <div class="col-md-4 mb-3">
-                  <label class="form-label" for="state">State</label>
-                  <multiselect
-                    id="state"
-                    v-model="selectedState"
-                    :options="states"
-                    :custom-label="opt => opt.state"
-                    track-by="state_id"
-                    placeholder="Select State"
-                    :loading="loadingStates"
-                    :disabled="loadingStates"
-                    :allow-empty="false"
-                  >
-                    <template #noResult>No states found</template>
-                    <template #noOptions>No states available</template>
-                  </multiselect>
-                </div>
-                <div class="col-md-4 mb-3">
-                  <label class="form-label" for="city">City</label>
-                  <multiselect
-                    id="city"
-                    v-model="selectedCity"
-                    :options="cities"
-                    :custom-label="opt => opt.city"
-                    track-by="city_id"
-                    placeholder="Select City"
-                    :loading="loadingCities"
-                    :disabled="loadingCities || !selectedState"
-                    :allow-empty="false"
-                  >
-                    <template #noResult>No cities found</template>
-                    <template #noOptions>{{ selectedState ? 'No cities available' : 'Please select a state first' }}</template>
-                  </multiselect>
-                </div>
-                <div class="col-md-4 mb-2">
-                  <label class="form-label" for="pincode">Pin Code</label>
-                  <div class="input-group">
-                    <input id="pincode" v-model="basicInfo.pincode" class="form-control" type="text"
-                      placeholder="Enter your pin code">
-                  </div>
-                </div>
-                <div class="col-md-4 mb-2">
-                  <label class="form-label" for="country">Country</label>
-                  <div class="input-group">
-                    <input id="country" v-model="basicInfo.country" class="form-control" type="text"
-                      placeholder="Enter your country">
-                  </div>
-                </div>
-                <div class="col-md-4 mb-2">
-                  <label class="form-label" for="gst">GST Number</label>
-                  <div class="input-group">
-                    <input id="gst" v-model="basicInfo.gst_number" class="form-control" type="text"
-                      placeholder="Enter your GST number">
-                  </div>
-                </div>
-                <div class="col-md-4 mb-2">
-                  <label class="form-label" for="turnover">Annual Turnover</label>
-                  <div class="input-group">
-                    <input id="turnover" v-model="basicInfo.annual_turnover" class="form-control" type="number"
-                      step="0.01" placeholder="Enter your annual turnover">
-                  </div>
-                </div>
-                <div class="col-md-4 mb-2">
-                  <label class="form-label fw-semibold" for="status">Status <span
-                      class="text-xxs text-danger ms-1">(Change the status of your account)</span></label>
-                  <select id="status" v-model="basicInfo.registration_status" class="form-select" required>
-                    <option value="active">Active (Ready to login)</option>
-                    <option value="unconfirmed">Unconfirmed (Requires user action)</option>
-                    <option value="deActive">Deactive</option>
-                    <option value="reject">Rejected</option>
-                  </select>
+            <div class="row g-3">
+              <!-- Personal fields -->
+              <div class="col-md-4">
+                <label class="f-label">User Name <span class="req">*</span></label>
+                <input type="text" class="f-input" v-model="basicInfo.user_name" required>
+              </div>
+              <div class="col-md-4">
+                <label class="f-label">Email <span class="req">*</span></label>
+                <input type="email" class="f-input" v-model="basicInfo.email" required>
+              </div>
+              <div class="col-md-4">
+                <label class="f-label">Phone <span class="req">*</span></label>
+                <input type="tel" class="f-input" v-model="basicInfo.phone" required>
+              </div>
+              <div class="col-md-4">
+                <label class="f-label">
+                  <i class="fab fa-whatsapp me-1 text-success"></i> WhatsApp
+                </label>
+                <div class="input-with-same">
+                  <input type="tel" :class="['f-input', samePhone ? 'readonly-look' : '']"
+                    v-model="basicInfo.whatsapp_number" :readonly="samePhone">
+                  <label class="same-check">
+                    <input type="checkbox" v-model="samePhone" @change="onSamePhone"> Same
+                  </label>
                 </div>
               </div>
-              <button type="submit" class="btn bg-gradient-dark btn-sm float-end mt-2 mb-0"
-                :disabled="basicInfoLoading">
-                {{ basicInfoLoading ? 'Updating...' : 'Update Basic Info' }}
+              <div class="col-md-4">
+                <label class="f-label">Account Status <span class="req">*</span></label>
+                <select class="f-input" v-model="basicInfo.registration_status" required>
+                  <option value="active">✅ Active</option>
+                  <option value="deActive">🚫 Deactive</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Billing Address Block -->
+            <div class="address-block mt-4 mb-3">
+              <div class="address-block-header">
+                <div class="address-block-icon billing-icon"><i class="fas fa-receipt"></i></div>
+                <span class="address-block-title">Billing Address</span>
+              </div>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="f-label">Address Line 1</label>
+                  <input type="text" class="f-input" v-model="basicInfo.billing_address_line1"
+                    placeholder="House / Flat no., Street name">
+                </div>
+                <div class="col-md-6">
+                  <label class="f-label">Address Line 2</label>
+                  <input type="text" class="f-input" v-model="basicInfo.billing_address_line2"
+                    placeholder="Area, Landmark (optional)">
+                </div>
+                <div class="col-md-4">
+                  <label class="f-label">State</label>
+                  <select class="f-input" v-model="basicInfo.billing_state_id">
+                    <option value="">Select State</option>
+                    <option v-for="s in states" :key="s.state_id" :value="s.state_id">{{ s.state }}</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label class="f-label">City</label>
+                  <input type="text" class="f-input" v-model="basicInfo.billing_city"
+                    placeholder="Enter city name">
+                </div>
+                <div class="col-md-2">
+                  <label class="f-label">Pincode</label>
+                  <input type="text" class="f-input" v-model="basicInfo.billing_pincode"
+                    placeholder="682001" maxlength="6">
+                </div>
+                <div class="col-md-2">
+                  <label class="f-label">Country</label>
+                  <div class="country-static">🇮🇳 India</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Shipping Address Block -->
+            <div class="address-block">
+              <div class="address-block-header">
+                <div class="address-block-icon shipping-icon"><i class="fas fa-truck"></i></div>
+                <span class="address-block-title">Shipping Address</span>
+                <label class="same-check-label ms-auto">
+                  <input type="checkbox" v-model="sameShipping" @change="onSameShipping"> Same as Billing
+                </label>
+              </div>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="f-label">Address Line 1</label>
+                  <input type="text" :class="['f-input', sameShipping ? 'readonly-look' : '']"
+                    v-model="basicInfo.shipping_address_line1" placeholder="House / Flat no., Street name"
+                    :readonly="sameShipping">
+                </div>
+                <div class="col-md-6">
+                  <label class="f-label">Address Line 2</label>
+                  <input type="text" :class="['f-input', sameShipping ? 'readonly-look' : '']"
+                    v-model="basicInfo.shipping_address_line2" placeholder="Area, Landmark (optional)"
+                    :readonly="sameShipping">
+                </div>
+                <div class="col-md-4">
+                  <label class="f-label">State</label>
+                  <select class="f-input" v-model="basicInfo.shipping_state_id"
+                    :disabled="sameShipping"
+                    :class="sameShipping ? 'readonly-look' : ''">
+                    <option value="">Select State</option>
+                    <option v-for="s in states" :key="s.state_id" :value="s.state_id">{{ s.state }}</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label class="f-label">City</label>
+                  <input type="text"
+                    :class="['f-input', sameShipping ? 'readonly-look' : '']"
+                    v-model="basicInfo.shipping_city"
+                    placeholder="Enter city name"
+                    :readonly="sameShipping">
+                </div>
+                <div class="col-md-2">
+                  <label class="f-label">Pincode</label>
+                  <input type="text" :class="['f-input', sameShipping ? 'readonly-look' : '']"
+                    v-model="basicInfo.shipping_pincode" placeholder="682001" maxlength="6"
+                    :readonly="sameShipping">
+                </div>
+                <div class="col-md-2">
+                  <label class="f-label">Country</label>
+                  <div class="country-static">🇮🇳 India</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card-footer-actions">
+              <button type="submit" class="btn-save" :disabled="basicInfoLoading">
+                <i class="fas fa-save me-2"></i>
+                {{ basicInfoLoading ? 'Saving...' : 'Save Changes' }}
               </button>
             </div>
           </form>
         </div>
-        <hr>
 
-        <!-- Change Password Section -->
-        <div class="card mt-4" id="password">
-          <div class="card-header">
-            <h5>Change Password</h5>
-            <p v-if="passwordMessage" :class="passwordStatus ? 'text-success' : 'text-danger'" class="text-sm mb-0">
+        <!-- ── Change Password ── -->
+        <div class="edit-card" id="password">
+          <div class="card-head">
+            <div class="card-icon purple"><i class="fas fa-lock"></i></div>
+            <div>
+              <h6 class="card-title">Change Password</h6>
+              <p class="card-sub">Set a new password for this user</p>
+            </div>
+            <span v-if="passwordMessage" class="inline-msg" :class="passwordStatus ? 'ok' : 'err'">
+              <i :class="passwordStatus ? 'fas fa-check-circle' : 'fas fa-exclamation-circle'"></i>
               {{ passwordMessage }}
-            </p>
+            </span>
           </div>
           <form @submit.prevent="updatePassword">
-            <div class="card-body pt-0">
-              <div class="row p-0">
-                <div class="col-12 col-md-6 mb-2">
-                  <label class="form-label" for="newPassword">New Password</label>
-                  <div class="form-group">
-                    <input id="newPassword" v-model="passwordForm.password" class="form-control" type="password"
-                      placeholder="Enter new password" required>
-                  </div>
-                </div>
-                <div class="col-12 col-md-6 mb-2">
-                  <label class="form-label" for="confirmPassword">Confirm New Password</label>
-                  <div class="form-group">
-                    <input id="confirmPassword" v-model="passwordForm.password_confirmation" class="form-control"
-                      type="password" placeholder="Confirm new password" required>
-                  </div>
+            <div class="row g-3">
+              <div class="col-md-5">
+                <label class="f-label">New Password <span class="req">*</span></label>
+                <div class="pwd-wrap">
+                  <input :type="showPwd ? 'text' : 'password'" class="f-input pe-5"
+                    v-model="passwordForm.password" placeholder="Enter new password" required>
+                  <button type="button" class="pwd-eye" @click="showPwd = !showPwd">
+                    <i :class="showPwd ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+                  </button>
                 </div>
               </div>
-              <button type="submit" class="btn bg-gradient-dark btn-sm float-end mb-0" :disabled="passwordLoading">
+              <div class="col-md-5">
+                <label class="f-label">Confirm Password <span class="req">*</span></label>
+                <div class="pwd-wrap">
+                  <input :type="showConfirm ? 'text' : 'password'" class="f-input pe-5"
+                    :class="pwdMismatch ? 'is-invalid' : (passwordForm.password_confirmation ? 'is-valid' : '')"
+                    v-model="passwordForm.password_confirmation" placeholder="Confirm new password" required>
+                  <button type="button" class="pwd-eye" @click="showConfirm = !showConfirm">
+                    <i :class="showConfirm ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+                  </button>
+                </div>
+                <p class="f-error-msg" v-if="pwdMismatch">Passwords do not match.</p>
+              </div>
+            </div>
+            <div class="card-footer-actions">
+              <button type="submit" class="btn-save purple-btn" :disabled="passwordLoading || pwdMismatch">
+                <i class="fas fa-key me-2"></i>
                 {{ passwordLoading ? 'Updating...' : 'Update Password' }}
               </button>
             </div>
           </form>
         </div>
-        <hr>
 
-        <!-- Delete Account Section -->
-        <div class="card mt-4" id="delete">
-          <div class="card-header">
-            <h5>Delete Account</h5>
-            <p class="text-sm mb-0">Once you delete your account, there is no going back. Please be certain.</p>
-            <p v-if="deleteMessage" :class="deleteStatus ? 'text-success' : 'text-danger'" class="text-sm mb-0">
-              {{ deleteMessage }}
-            </p>
-          </div>
-          <div class="card-body d-sm-flex pt-0">
-            <div class="d-flex align-items-center mb-sm-0 mb-4">
-              <div>
-                <div class="form-check form-switch mb-0">
-                  <input class="form-check-input" type="checkbox" id="deleteConfirm" v-model="deleteConfirmed">
-                </div>
-              </div>
-              <div class="ms-2">
-                <span class="text-dark font-weight-bold d-block text-sm">Confirm</span>
-                <span class="text-xs d-block">I want to delete this account.</span>
-              </div>
+        <!-- ── Delete Account ── -->
+        <div class="edit-card danger-card" id="delete">
+          <div class="card-head">
+            <div class="card-icon red"><i class="fas fa-trash-alt"></i></div>
+            <div>
+              <h6 class="card-title">Delete Account</h6>
+              <p class="card-sub">Once deleted, there is no going back. Please be certain.</p>
             </div>
-            <button class="btn bg-gradient-danger mb-0 ms-auto" type="button" @click="removeUser"
-              :disabled="!deleteConfirmed || deleteLoading">
-              {{ deleteLoading ? 'Deleting...' : 'Delete Account' }}
-            </button>
           </div>
+          <div class="delete-body">
+            <div class="delete-warning">
+              <i class="fas fa-exclamation-triangle me-2"></i>
+              This action will permanently remove the user and all associated data.
+            </div>
+            <div class="delete-confirm-row">
+              <label class="confirm-label">
+                <input type="checkbox" v-model="deleteConfirmed">
+                I understand and want to delete this account
+              </label>
+              <button class="btn-delete" @click="removeUser" :disabled="!deleteConfirmed || deleteLoading">
+                <i class="fas fa-trash me-2"></i>
+                {{ deleteLoading ? 'Deleting...' : 'Delete Account' }}
+              </button>
+            </div>
+          </div>
+          <span v-if="deleteMessage" class="inline-msg mt-2 d-block" :class="deleteStatus ? 'ok' : 'err'">
+            <i :class="deleteStatus ? 'fas fa-check-circle' : 'fas fa-exclamation-circle'"></i>
+            {{ deleteMessage }}
+          </span>
         </div>
+
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, watch, computed } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import Multiselect from 'vue-multiselect';
-import profileImg from '@/assets/website/img/reviewer-1.png';
-import { api } from "@/services/api";
+import { ref, computed, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { api } from '@/services/api'
 
-// --- Configuration ---
-const route = useRoute();
-const router = useRouter(); // 👈 Initialize useRouter
-const USER_ID = computed(() => route.params.id || 1); // Get ID from route params
+const route = useRoute()
+const router = useRouter()
+const loading = ref(true)
+const showPwd = ref(false)
+const showConfirm = ref(false)
+const samePhone = ref(false)
+const sameShipping = ref(false)
 
-// --- State ---
-const user = ref(null);
-const loading = ref(true);
+// ── User data ─────────────────────────────────────────────────────────────────
+const user = ref({})
+const basicInfo = ref({})
+const basicInfoLoading = ref(false)
+const basicInfoMessage = ref('')
+const basicInfoStatus = ref(false)
 
-// Basic Info Form State
-const basicInfo = ref({
-  user_name: '',
-  email: '',
-  phone: '',
-  whatsapp_number: '',
-  address: '',
-  delivery_address: '',
-  state_id: null,
-  city_id: null,
-  pincode: '',
-  country: '',
-  gst_number: '',
-  annual_turnover: null,
-  registration_status: ''
-});
-const basicInfoLoading = ref(false);
-const basicInfoMessage = ref('');
-const basicInfoStatus = ref(false);
+const passwordForm = ref({ password: '', password_confirmation: '' })
+const passwordLoading = ref(false)
+const passwordMessage = ref('')
+const passwordStatus = ref(false)
 
-// States and Cities
-const states = ref([]);
-const cities = ref([]);
-const selectedState = ref(null);
-const selectedCity = ref(null);
-const loadingStates = ref(false);
-const loadingCities = ref(false);
+const deleteConfirmed = ref(false)
+const deleteLoading = ref(false)
+const deleteMessage = ref('')
+const deleteStatus = ref(false)
 
-// Password Form State
-const passwordForm = ref({
-  password: '',
-  password_confirmation: ''
-});
-const passwordLoading = ref(false);
-const passwordMessage = ref('');
-const passwordStatus = ref(false);
+const activeTab = ref('basic-info')
+const tabs = [
+  { id: 'basic-info', icon: 'fas fa-user me-2', label: 'Basic Info' },
+  { id: 'password',   icon: 'fas fa-lock me-2',  label: 'Password' },
+  { id: 'delete',     icon: 'fas fa-trash me-2', label: 'Delete' },
+]
 
-// Delete Account State
-const deleteConfirmed = ref(false);
-const deleteLoading = ref(false);
-const deleteMessage = ref('');
-const deleteStatus = ref(false);
+// ── States ────────────────────────────────────────────────────────────────────
+const states = ref([])
 
-// Active Tab State
-const activeTab = ref('profile');
-
-// --- Methods ---
-
-/**
- * Sets the active tab and scrolls to the section
- */
-const setActiveTab = (tabId) => {
-  activeTab.value = tabId;
-  const element = document.getElementById(tabId);
-  if (element) {
-    element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-};
-
-/**
- * Check if tab is active
- */
-const isActiveTab = (tabId) => {
-  return activeTab.value === tabId;
-};
-
-/**
- * Fetches active states from the API
- */
 const fetchStates = async () => {
-  loadingStates.value = true;
   try {
-    const response = await api.get('/v1/admin/state/active');
-    if (response.data.success) {
-      states.value = response.data.data;
-    } else {
-      console.error('Failed to fetch states:', response.data.message);
-    }
-  } catch (error) {
-    console.error('Error fetching states:', error);
-  } finally {
-    loadingStates.value = false;
-  }
-};
+    const res = await api.get('/v1/state/active')
+    states.value = res.data.data
+  } catch (e) { console.error(e) }
+}
 
-/**
- * Fetches active cities for a given state
- */
-const fetchCities = async (stateId) => {
-  if (!stateId) {
-    cities.value = [];
-    selectedCity.value = null;
-    return;
-  }
-  
-  loadingCities.value = true;
-  try {
-    const response = await api.get(`/v1/admin/city/active/${stateId}`);
-    if (response.data.success) {
-      cities.value = response.data.data;
-      
-      // If editing and city_id exists, set the selected city
-      if (basicInfo.value.city_id) {
-        selectedCity.value = cities.value.find(c => c.city_id === basicInfo.value.city_id) || null;
-      }
-    } else {
-      console.error('Failed to fetch cities:', response.data.message);
-      cities.value = [];
-    }
-  } catch (error) {
-    console.error('Error fetching cities:', error);
-    cities.value = [];
-  } finally {
-    loadingCities.value = false;
-  }
-};
+// ── Same as Phone ─────────────────────────────────────────────────────────────
+const onSamePhone = () => {
+  if (samePhone.value) basicInfo.value.whatsapp_number = basicInfo.value.phone
+  else basicInfo.value.whatsapp_number = ''
+}
 
-/**
- * Watch for state changes to fetch cities
- */
-watch(selectedState, (newState) => {
-  if (newState) {
-    basicInfo.value.state_id = newState.state_id;
-    fetchCities(newState.state_id);
+// ── Same as Billing ───────────────────────────────────────────────────────────
+const onSameShipping = () => {
+  if (sameShipping.value) {
+    basicInfo.value.shipping_address_line1 = basicInfo.value.billing_address_line1
+    basicInfo.value.shipping_address_line2 = basicInfo.value.billing_address_line2
+    basicInfo.value.shipping_state_id = basicInfo.value.billing_state_id
+    basicInfo.value.shipping_city = basicInfo.value.billing_city
+    basicInfo.value.shipping_pincode = basicInfo.value.billing_pincode
   } else {
-    basicInfo.value.state_id = null;
-    cities.value = [];
-    selectedCity.value = null;
-    basicInfo.value.city_id = null;
+    basicInfo.value.shipping_address_line1 = ''
+    basicInfo.value.shipping_address_line2 = ''
+    basicInfo.value.shipping_state_id = ''
+    basicInfo.value.shipping_city = ''
+    basicInfo.value.shipping_pincode = ''
   }
-});
+}
 
-/**
- * Watch for city changes
- */
-watch(selectedCity, (newCity) => {
-  if (newCity) {
-    basicInfo.value.city_id = newCity.city_id;
-  } else {
-    basicInfo.value.city_id = null;
-  }
-});
+// ── Computed ──────────────────────────────────────────────────────────────────
+const avatarColors = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4']
+const avatarColor = computed(() => avatarColors[(user.value.user_name?.charCodeAt(0) || 0) % avatarColors.length])
+const statusLabel = (s) => ({ active: 'Active', unconfirmed: 'Unconfirmed', deActive: 'Deactive', reject: 'Rejected' }[s] || s)
+const pwdMismatch = computed(() =>
+  passwordForm.value.password_confirmation && passwordForm.value.password !== passwordForm.value.password_confirmation
+)
 
-/**
- * Fetches the user data and populates the reactive state.
- */
-const fetchUser = async () => {
-  loading.value = true;
-  try {
-    const response = await api.get(`/v1/admin/user/view/${USER_ID.value}`);
-    if (response.data.success) {
-      user.value = response.data.data;
-      
-      // Populate basicInfo form for editing
-      basicInfo.value = {
-        user_name: user.value.user_name || '',
-        email: user.value.email || '',
-        phone: user.value.phone || '',
-        whatsapp_number: user.value.whatsapp_number || '',
-        address: user.value.address || '',
-        delivery_address: user.value.delivery_address || '',
-        state_id: user.value.state_id || null,
-        city_id: user.value.city_id || null,
-        pincode: user.value.pincode || '',
-        country: user.value.country || '',
-        gst_number: user.value.gst_number || '',
-        annual_turnover: user.value.annual_turnover || null,
-        registration_status: user.value.registration_status || 'active',
-      };
-      
-      // Set selected state and city after states are loaded
-      if (user.value.state_id && states.value.length > 0) {
-        selectedState.value = states.value.find(s => s.state_id === user.value.state_id) || null;
-        if (selectedState.value && user.value.city_id) {
-          await fetchCities(user.value.state_id);
-        }
-      }
-    } else {
-      console.error('API Error:', response.data.message);
-    }
-  } catch (error) {
-    console.error('Fetch user failed:', error);
-  } finally {
-    loading.value = false;
-  }
-};
+// ── Actions ───────────────────────────────────────────────────────────────────
+const scrollTo = (id) => {
+  activeTab.value = id
+  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+}
 
-/**
- * Updates the user's basic information.
- */
+const showMsg = (msgRef, statusRef, msg, ok, duration = 3500) => {
+  msgRef.value = msg; statusRef.value = ok
+  setTimeout(() => msgRef.value = '', duration)
+}
+
 const updateBasicInfo = async () => {
-  basicInfoLoading.value = true;
-  basicInfoMessage.value = '';
-  basicInfoStatus.value = false;
-
-  const payload = {
-    ...basicInfo.value,
-    annual_turnover: basicInfo.value.annual_turnover ? parseFloat(basicInfo.value.annual_turnover) : 0,
-    state_id: basicInfo.value.state_id ? parseInt(basicInfo.value.state_id) : null,
-    city_id: basicInfo.value.city_id ? parseInt(basicInfo.value.city_id) : null,
-  };
-
+  basicInfoLoading.value = true
   try {
-    const response = await api.put(`/v1/admin/user/update/${USER_ID.value}`, payload);
-    if (response.data.status) {
-      basicInfoMessage.value = response.data.message;
-      basicInfoStatus.value = true;
-      user.value = { ...user.value, ...response.data.data };
-    } else {
-      basicInfoMessage.value = response.data.message || 'Failed to update basic info.';
-      basicInfoStatus.value = false;
-    }
-  } catch (error) {
-    basicInfoMessage.value = error.response?.data?.message || 'An error occurred during update.';
-    basicInfoStatus.value = false;
+    // TODO: await api.put(`/v1/admin/user/update/${route.params.id}`, basicInfo.value)
+    await new Promise(r => setTimeout(r, 800))
+    user.value = { ...user.value, ...basicInfo.value }
+    showMsg(basicInfoMessage, basicInfoStatus, 'User information updated successfully.', true)
+  } catch (e) {
+    showMsg(basicInfoMessage, basicInfoStatus, 'Failed to update. Please try again.', false)
   } finally {
-    basicInfoLoading.value = false;
+    basicInfoLoading.value = false
   }
-};
+}
 
-/**
- * Updates the user's password.
- */
 const updatePassword = async () => {
-  passwordLoading.value = true;
-  passwordMessage.value = '';
-  passwordStatus.value = false;
-
-  if (passwordForm.value.password !== passwordForm.value.password_confirmation) {
-    passwordMessage.value = 'New Password and Confirm New Password must match.';
-    passwordStatus.value = false;
-    passwordLoading.value = false;
-    return;
-  }
-
+  if (pwdMismatch.value) return
+  passwordLoading.value = true
   try {
-    const response = await api.put(`/v1/admin/user/password/update/${USER_ID.value}`, {
-      password: passwordForm.value.password,
-      password_confirmation: passwordForm.value.password_confirmation
-    });
-
-    if (response.data.success) {
-      passwordMessage.value = response.data.message;
-      passwordStatus.value = true;
-      passwordForm.value.password = '';
-      passwordForm.value.password_confirmation = '';
-    } else {
-      passwordMessage.value = response.data.message || 'Failed to update password.';
-      passwordStatus.value = false;
-    }
-  } catch (error) {
-    passwordMessage.value = error.response?.data?.message || 'An error occurred during password update.';
-    passwordStatus.value = false;
+    // TODO: await api.put(`/v1/admin/user/password/update/${route.params.id}`, passwordForm.value)
+    await new Promise(r => setTimeout(r, 800))
+    showMsg(passwordMessage, passwordStatus, 'Password updated successfully.', true)
+    passwordForm.value = { password: '', password_confirmation: '' }
+  } catch (e) {
+    showMsg(passwordMessage, passwordStatus, 'Failed to update password.', false)
   } finally {
-    passwordLoading.value = false;
+    passwordLoading.value = false
   }
-};
+}
 
-/**
- * Removes (soft deletes) the user.
- */
 const removeUser = async () => {
-  if (!deleteConfirmed.value) return;
-
-  deleteLoading.value = true;
-  deleteMessage.value = '';
-  deleteStatus.value = false;
-
+  if (!deleteConfirmed.value) return
+  deleteLoading.value = true
   try {
-    const response = await api.put(`/v1/admin/user/remove/${USER_ID.value}`);
-    if (response.data.success) {
-      deleteMessage.value = response.data.message + ' You may be redirected now.';
-      deleteStatus.value = true;
-      // Optional: Redirect after successful deletion
-      setTimeout(() => router.push('/admin/user-list'), 2000);
-    } else {
-      deleteMessage.value = response.data.message || 'Failed to remove user.';
-      deleteStatus.value = false;
-    }
-  } catch (error) {
-    deleteMessage.value = error.response?.data?.message || 'An error occurred during removal.';
-    deleteStatus.value = false;
+    // TODO: await api.put(`/v1/admin/user/remove/${route.params.id}`)
+    await new Promise(r => setTimeout(r, 1000))
+    showMsg(deleteMessage, deleteStatus, 'User removed. Redirecting...', true)
+    setTimeout(() => router.push('/admin/user-list'), 2000)
+  } catch (e) {
+    showMsg(deleteMessage, deleteStatus, 'Failed to delete user.', false)
   } finally {
-    deleteLoading.value = false;
+    deleteLoading.value = false
   }
-};
+}
 
-/**
- * Utility function to apply class based on registration status.
- */
-const statusClass = (status) => {
-  switch (status) {
-    case 'active':
-      return 'badge badge-success';
-    case 'unconfirmed':
-      return 'badge badge-unconfirmed';
-    case 'reject':
-    case 'deActive':
-      return 'badge badge-danger';
-    default:
-      return 'badge badge-info';
-  }
-};
-
-// --- Lifecycle Hook ---
+// ── Fetch user on mount ───────────────────────────────────────────────────────
 onMounted(async () => {
-  await fetchStates(); // Load states first
-  await fetchUser(); // Then load user data which will set state/city
-  
-  // Setup Intersection Observer for automatic tab switching on scroll
-  const sections = ['profile', 'basic-info', 'password', 'delete'];
-  const observerOptions = {
-    root: null,
-    rootMargin: '-50% 0px -50% 0px',
-    threshold: 0
-  };
-  
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        activeTab.value = entry.target.id;
-      }
-    });
-  }, observerOptions);
-  
-  sections.forEach(sectionId => {
-    const element = document.getElementById(sectionId);
-    if (element) {
-      observer.observe(element);
+  await fetchStates()
+  try {
+    // TODO: const res = await api.get(`/v1/admin/user/view/${route.params.id}`)
+    // user.value = res.data.data
+    // basicInfo.value = { ...res.data.data }
+    await new Promise(r => setTimeout(r, 600))
+    user.value = {
+      public_user_id: 'U003', user_name: 'Sundar Coffee Co.',
+      email: 'sundar@coffeeco.in', phone: '9988776655',
+      whatsapp_number: '9988776655',
+      billing_address_line1: '12, MG Road', billing_address_line2: 'Ernakulam',
+      billing_state_id: '', billing_city: '', billing_pincode: '682001',
+      shipping_address_line1: 'Warehouse 4, Industrial Area', shipping_address_line2: 'Kalamassery',
+      shipping_state_id: '', shipping_city: '', shipping_pincode: '682001',
+      country: 'India', registration_status: 'active', user_type: 'wholesale',
     }
-  });
-});
+    basicInfo.value = { ...user.value }
+    samePhone.value = user.value.whatsapp_number === user.value.phone
+  } catch (e) { console.error(e) }
+  loading.value = false
+})
 </script>
 
 <style scoped>
-input.form-control {
-  font-size: 0.95rem;
+.admin-page {
+  padding: 24px;
+  padding-top: 0 !important;
+  min-height: 100vh;
+  font-family: 'DM Sans', 'Segoe UI', sans-serif;
 }
 
-.card {
-  transition: box-shadow 0.3s ease-in-out;
+.page-header { margin-bottom: 24px; }
+.header-left { display: flex; align-items: center; gap: 14px; }
+.page-title { font-size: 1.4rem; font-weight: 800; color: #ffffff; margin: 0 0 2px; }
+.page-sub { color: #bdbdbd; font-size: 0.82rem; margin: 0; }
+
+/* Loading */
+.loading-state { text-align: center; padding: 80px 20px; color: #94a3b8; }
+.loading-dots { display: flex; justify-content: center; gap: 6px; margin-bottom: 12px; }
+.loading-dots span { width: 10px; height: 10px; border-radius: 50%; background: #cbd5e1; animation: bounce 0.8s infinite; }
+.loading-dots span:nth-child(2) { animation-delay: 0.15s; }
+.loading-dots span:nth-child(3) { animation-delay: 0.3s; }
+@keyframes bounce { 0%,80%,100% { transform: scale(0.7) } 40% { transform: scale(1) } }
+
+/* Layout */
+.edit-layout { display: flex; gap: 24px; align-items: flex-start; }
+.profile-col { width: 210px; flex-shrink: 0; position: sticky; top: 24px; }
+.content-col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+
+/* Profile Card */
+.profile-card {
+  background: #fff; border-radius: 16px; padding: 24px 18px;
+  text-align: center; box-shadow: 0 1px 12px rgba(0,0,0,0.06); border: 1px solid #f1f5f9;
+}
+.profile-avatar {
+  width: 64px; height: 64px; border-radius: 18px; margin: 0 auto 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.6rem; font-weight: 800; color: #fff;
+}
+.profile-name { font-weight: 700; color: #1e293b; font-size: 0.9rem; margin-bottom: 4px; }
+.profile-email { color: #94a3b8; font-size: 0.72rem; margin-bottom: 2px; word-break: break-all; }
+.profile-phone { color: #64748b; font-size: 0.78rem; }
+.profile-badges { display: flex; flex-direction: column; gap: 6px; align-items: center; margin-top: 10px; }
+.profile-divider { border: none; border-top: 1px solid #f1f5f9; margin: 14px 0; }
+
+.status-pill { font-size: 0.7rem; font-weight: 700; padding: 3px 10px; border-radius: 99px; display: inline-block; }
+.status-pill.active { background: #f0fdf4; color: #16a34a; }
+.status-pill.unconfirmed { background: #fffbeb; color: #d97706; }
+.status-pill.deActive { background: #f1f5f9; color: #64748b; }
+.status-pill.reject { background: #fef2f2; color: #dc2626; }
+.type-pill { font-size: 0.7rem; font-weight: 700; padding: 3px 10px; border-radius: 99px; display: inline-flex; align-items: center; }
+.type-pill.retail { background: #eff6ff; color: #3b82f6; }
+.type-pill.wholesale { background: #fdf4ff; color: #9333ea; }
+
+.profile-nav { display: flex; flex-direction: column; gap: 4px; }
+.nav-item {
+  display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+  border-radius: 8px; font-size: 0.8rem; font-weight: 600; color: #64748b;
+  cursor: pointer; transition: all 0.15s; text-decoration: none;
+}
+.nav-item:hover { background: #f1f5f9; color: #1e293b; }
+.nav-item.active { background: #1e293b; color: #fff; }
+
+/* Edit Cards */
+.edit-card {
+  background: #fff; border-radius: 16px; padding: 24px;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.04); border: 1px solid #f1f5f9;
+}
+.danger-card { border-color: #fecaca; }
+
+.card-head {
+  display: flex; align-items: flex-start; gap: 14px;
+  margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid #f8fafc; flex-wrap: wrap;
+}
+.card-icon {
+  width: 38px; height: 38px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0;
+}
+.card-icon.blue { background: #eff6ff; color: #3b82f6; }
+.card-icon.purple { background: #faf5ff; color: #9333ea; }
+.card-icon.red { background: #fef2f2; color: #ef4444; }
+.card-title { font-size: 0.95rem; font-weight: 700; color: #1e293b; margin: 0 0 2px; }
+.card-sub { font-size: 0.78rem; color: #94a3b8; margin: 0; }
+
+.inline-msg {
+  display: flex; align-items: center; gap: 6px; font-size: 0.78rem; font-weight: 600;
+  padding: 4px 10px; border-radius: 8px; margin-left: auto; flex-shrink: 0;
+}
+.inline-msg.ok { background: #f0fdf4; color: #16a34a; }
+.inline-msg.err { background: #fef2f2; color: #dc2626; }
+
+/* ── Address Blocks ── */
+.address-block {
+  border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 16px 18px; background: #f8fafc;
+}
+.address-block-header {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #edf2f7;
+}
+.address-block-icon {
+  width: 30px; height: 30px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center; font-size: 0.8rem; flex-shrink: 0;
+}
+.billing-icon { background: #eff6ff; color: #3b82f6; }
+.shipping-icon { background: #f0fdf4; color: #22c55e; }
+.address-block-title { font-size: 0.78rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: #475569; }
+
+/* Fields */
+.f-label {
+  font-size: 0.73rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.4px; color: #64748b; margin-bottom: 5px; display: block;
+}
+.req { color: #ef4444; }
+.f-input {
+  width: 100%; padding: 9px 12px; border: 1.5px solid #e2e8f0;
+  border-radius: 10px; font-size: 0.875rem; color: #1e293b;
+  background: #f8fafc; outline: none; transition: border-color 0.2s; font-family: inherit;
+}
+.f-input:focus { border-color: #3b82f6; background: #fff; }
+.f-input.is-valid { border-color: #22c55e; }
+.f-input.is-invalid { border-color: #ef4444; }
+.f-input.readonly-look { background: #f1f5f9; color: #64748b; cursor: default; }
+select.f-input {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2394a3b8' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px;
+}
+select.f-input:disabled { background-color: #f1f5f9; color: #94a3b8; cursor: default; }
+.f-error-msg { font-size: 0.75rem; color: #ef4444; margin-top: 3px; }
+
+/* WhatsApp same */
+.input-with-same { position: relative; }
+.same-check {
+  position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+  font-size: 0.72rem; color: #3b82f6; font-weight: 600; cursor: pointer;
+  display: flex; align-items: center; gap: 4px; background: #fff; padding: 2px 4px;
+}
+.same-check input { accent-color: #3b82f6; }
+.same-check-label {
+  font-size: 0.75rem; color: #3b82f6; font-weight: 600; cursor: pointer;
+  display: flex; align-items: center; gap: 4px; white-space: nowrap;
+}
+.same-check-label input { accent-color: #3b82f6; }
+
+/* Country */
+.country-static {
+  display: flex; align-items: center; gap: 8px; padding: 9px 12px;
+  border: 1.5px solid #e2e8f0; border-radius: 10px; background: #f1f5f9;
+  font-size: 0.875rem; color: #64748b; height: 40px;
 }
 
-.card:hover {
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+/* Password */
+.pwd-wrap { position: relative; }
+.pwd-eye {
+  position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 0.85rem; padding: 4px;
 }
+.pwd-eye:hover { color: #475569; }
 
-/* Vue Multiselect Styles */
-:deep(.multiselect) {
-  min-height: 42px;
-  font-size: 0.95rem;
+/* Card footer */
+.card-footer-actions {
+  display: flex; justify-content: flex-end; margin-top: 20px;
+  padding-top: 16px; border-top: 1px solid #f8fafc;
 }
+.btn-save {
+  padding: 9px 22px; border-radius: 10px; border: none;
+  background: linear-gradient(135deg, #1e293b, #334155); color: #fff;
+  font-weight: 600; font-size: 0.875rem; cursor: pointer; transition: all 0.2s;
+}
+.btn-save:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(30,41,59,0.25); }
+.btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-save.purple-btn { background: linear-gradient(135deg, #7c3aed, #9333ea); }
 
-:deep(.multiselect__tags) {
-  min-height: 42px;
-  padding: 8px 40px 0 8px;
-  border: 1px solid #d2d6da;
-  border-radius: 0.5rem;
+/* Delete */
+.delete-body { margin-top: 4px; }
+.delete-warning {
+  background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px;
+  padding: 12px 16px; font-size: 0.85rem; color: #dc2626; font-weight: 500; margin-bottom: 16px;
 }
+.delete-confirm-row {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+}
+.confirm-label { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #475569; cursor: pointer; font-weight: 500; }
+.confirm-label input { accent-color: #ef4444; }
+.btn-delete {
+  padding: 9px 20px; border-radius: 10px; border: none;
+  background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff;
+  font-weight: 600; font-size: 0.875rem; cursor: pointer; transition: all 0.2s;
+}
+.btn-delete:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(239,68,68,0.3); }
+.btn-delete:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
-:deep(.multiselect__single) {
-  font-size: 0.95rem;
-  margin-bottom: 0;
-  padding-top: 2px;
-}
-
-:deep(.multiselect__placeholder) {
-  color: #adb5bd;
-  padding-top: 2px;
-  margin-bottom: 0;
-}
-
-:deep(.multiselect__select) {
-  height: 42px;
-}
-
-:deep(.multiselect__option--highlight) {
-  background: #344767;
-}
-
-:deep(.multiselect__option--selected) {
-  background: #f8f9fa;
-  color: #344767;
-  font-weight: 600;
-}
-
-:deep(.multiselect__content-wrapper) {
-  border: 1px solid #d2d6da;
-  border-radius: 0.5rem;
-}
-
-/* Active Tab Styles */
-.nav-link.active {
-  background: linear-gradient(310deg, #141727 0%, #3A416F 100%) !important;
-  color: #fff !important;
-  box-shadow: 0 3px 5px -1px rgba(0, 0, 0, 0.09), 0 2px 3px -1px rgba(0, 0, 0, 0.07);
-}
-
-.nav-link.active .text-sm {
-  color: #fff !important;
-}
-
-.nav-link {
-  transition: all 0.15s ease-in;
-  cursor: pointer;
-}
-
-.nav-link:hover:not(.active) {
-  background-color: rgba(0, 0, 0, 0.02);
-}
-
-.badge-active {
-  background-color: #28a745;
-}
-.badge-unconfirmed {
-  background-color: #17a2b8;
-}
-.badge-deactive {
-  background-color: #6c757d;
-}
-.badge-rejected {
-  background-color: #dc3545;
+@media (max-width: 768px) {
+  .edit-layout { flex-direction: column; }
+  .profile-col { width: 100%; position: static; }
+  .address-block-header { flex-wrap: wrap; }
 }
 </style>

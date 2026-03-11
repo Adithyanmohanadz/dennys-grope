@@ -212,11 +212,13 @@
                       <!-- Price & Action Button -->
                       <div class="col-md-3 col-12 d-flex flex-column align-items-end">
 
-                        <!-- Wholesale: View Price button -->
+                        <!-- Wholesale: Route to Registration Page -->
                         <div v-if="isWholesale(item)" class="w-100">
-                          <button class="btn btn-primary w-100 text-dark" @click="openWholesaleModal(item)">
-                            <i class="fas fa-eye me-2"></i> View Price
-                          </button>
+                          <router-link
+                            :to="{ name: 'wholesale-registration', query: { item_id: item.item_id, item_name: item.item_name } }"
+                            class="btn btn-primary w-100 text-dark text-decoration-none d-flex align-items-center justify-content-center gap-2">
+                            <i class="fas fa-eye"></i> View Price
+                          </router-link>
                         </div>
 
                         <!-- Retail: Price + Add to Cart -->
@@ -256,9 +258,8 @@
                             </template>
                           </div>
 
-                          <!-- Add to Cart button — shows spinner while this item is being added -->
-                          <button
-                            class="btn btn-dark-modern w-100"
+                          <!-- Add to Cart button -->
+                          <button class="btn btn-dark-modern w-100"
                             :disabled="!getActiveSubItem(item) || cartLoadingItems[item.item_id]"
                             @click="addToCart(item)">
                             <span v-if="cartLoadingItems[item.item_id]">
@@ -314,13 +315,8 @@
 
     <!-- ── Add to Cart Toast ─────────────────────────────────────────────── -->
     <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1100;">
-      <div
-        id="cartToast"
-        class="toast align-items-center text-white border-0"
-        :class="cartToast.success ? 'bg-success' : 'bg-danger'"
-        role="alert"
-        aria-live="assertive"
-        aria-atomic="true"
+      <div id="cartToast" class="toast align-items-center text-white border-0"
+        :class="cartToast.success ? 'bg-success' : 'bg-danger'" role="alert" aria-live="assertive" aria-atomic="true"
         ref="cartToastEl">
         <div class="d-flex">
           <div class="toast-body">
@@ -332,112 +328,16 @@
       </div>
     </div>
 
-    <!-- Wholesale Modal -->
-    <div class="modal fade" id="wholesaleModal" tabindex="-1" aria-labelledby="wholesaleModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-header border-0 pb-0">
-            <h5 class="modal-title fw-bold" id="wholesaleModalLabel">Wholesale Price Request</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body p-4">
-            <div class="alert alert-info mb-4" role="alert">
-              <i class="fas fa-info-circle me-2"></i>
-              <strong>Please fill in your company details.</strong> We will review your information and send the
-              wholesale price view confirmation to your email address.
-            </div>
-
-            <form @submit.prevent="submitWholesaleRequest">
-              <!-- Personal Details -->
-              <div class="mb-4">
-                <h6 class="fw-bold mb-3 text-primary">Personal Details</h6>
-                <div class="row g-3">
-                  <div class="col-md-6">
-                    <label class="form-label">First Name <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" v-model="wholesaleForm.firstName" required>
-                  </div>
-                  <div class="col-md-6">
-                    <label class="form-label">Last Name <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" v-model="wholesaleForm.lastName" required>
-                  </div>
-                  <div class="col-md-6">
-                    <label class="form-label">Email Address <span class="text-danger">*</span></label>
-                    <input type="email" class="form-control" v-model="wholesaleForm.email" required>
-                  </div>
-                  <div class="col-md-6">
-                    <label class="form-label">Phone Number <span class="text-danger">*</span></label>
-                    <input type="tel" class="form-control" v-model="wholesaleForm.phone" required>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Company Details -->
-              <div class="mb-4">
-                <h6 class="fw-bold mb-3 text-primary">Company Details</h6>
-                <div class="row g-3">
-                  <div class="col-md-12">
-                    <label class="form-label">Company Name <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" v-model="wholesaleForm.companyName" required>
-                  </div>
-                  <div class="col-md-6">
-                    <label class="form-label">Business Type <span class="text-danger">*</span></label>
-                    <select class="form-select" v-model="wholesaleForm.businessType" required>
-                      <option value="">Select Business Type</option>
-                      <option value="retailer">Retailer</option>
-                      <option value="distributor">Distributor</option>
-                      <option value="manufacturer">Manufacturer</option>
-                      <option value="other">Other</option>
-                    </select>
-                  </div>
-                  <div class="col-md-6">
-                    <label class="form-label">GST Number</label>
-                    <input type="text" class="form-control" v-model="wholesaleForm.gstNumber">
-                  </div>
-                  <div class="col-md-12">
-                    <label class="form-label">Company Address <span class="text-danger">*</span></label>
-                    <textarea class="form-control" rows="2" v-model="wholesaleForm.address" required></textarea>
-                  </div>
-                  <div class="col-md-6">
-                    <label class="form-label">City <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" v-model="wholesaleForm.city" required>
-                  </div>
-                  <div class="col-md-6">
-                    <label class="form-label">State <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" v-model="wholesaleForm.state" required>
-                  </div>
-                  <div class="col-md-6">
-                    <label class="form-label">Pincode <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" v-model="wholesaleForm.pincode" required>
-                  </div>
-                  <div class="col-md-12">
-                    <label class="form-label">Additional Information</label>
-                    <textarea class="form-control" rows="3" v-model="wholesaleForm.additionalInfo"
-                      placeholder="Tell us about your wholesale requirements..."></textarea>
-                  </div>
-                </div>
-              </div>
-
-              <div class="d-flex gap-2 justify-content-end">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="submit" class="btn btn-primary px-4">
-                  <i class="fas fa-paper-plane me-2"></i> Submit Request
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-    </div>
-
   </section>
 </template>
 
 <script setup>
 import { ref, reactive, computed, onMounted } from "vue";
-import { Modal, Toast } from "bootstrap";
+import { Toast } from "bootstrap";
 import { websiteApi } from '@/services/api';
 import { getGuestId } from '@/utils/guest';
 import emitter from '@/utils/emitter.js';
+
 // ─── State ────────────────────────────────────────────────────────────────────
 
 const categories = ref([]);
@@ -447,10 +347,8 @@ const items = ref([]);
 const itemsLoading = ref(false);
 const itemsError = ref(null);
 
-// Tracks which item_id is currently being added to cart (for per-button spinner)
 const cartLoadingItems = reactive({});
 
-// Toast ref + state
 const cartToastEl = ref(null);
 const cartToast = reactive({ success: true, message: '' });
 
@@ -471,15 +369,6 @@ const selectedQuantityType = reactive({});
 const selectedVariants = reactive({});
 const selectedSubItem = reactive({});
 
-let wholesaleModalInstance = null;
-const currentWholesaleItem = ref(null);
-
-const wholesaleForm = ref({
-  firstName: '', lastName: '', email: '', phone: '',
-  companyName: '', businessType: '', gstNumber: '',
-  address: '', city: '', state: '', pincode: '', additionalInfo: ''
-});
-
 // ─── Toast Helper ─────────────────────────────────────────────────────────────
 
 const showToast = (message, success = true) => {
@@ -497,16 +386,13 @@ const visiblePages = computed(() => {
   const { currentPage, lastPage } = pagination;
   const delta = 2;
   const range = [];
-
   const left = Math.max(1, currentPage - delta);
   const right = Math.min(lastPage, currentPage + delta);
-
   if (left > 1) range.push(1);
   if (left > 2) range.push('...');
   for (let i = left; i <= right; i++) range.push(i);
   if (right < lastPage - 1) range.push('...');
   if (right < lastPage) range.push(lastPage);
-
   return range;
 });
 
@@ -516,9 +402,7 @@ const fetchCategories = async () => {
   categoriesLoading.value = true;
   try {
     const res = await websiteApi.get('v1/category/active');
-    if (res.data.success) {
-      categories.value = res.data.data;
-    }
+    if (res.data.success) categories.value = res.data.data;
   } catch (e) {
     console.error('fetchCategories error:', e);
   } finally {
@@ -529,7 +413,6 @@ const fetchCategories = async () => {
 const fetchItems = async (page = 1) => {
   itemsLoading.value = true;
   itemsError.value = null;
-
   try {
     const params = {
       page,
@@ -537,21 +420,16 @@ const fetchItems = async (page = 1) => {
       ...(selectedCategories.value.length && { category_ids: selectedCategories.value.join(',') }),
       ...(sortBy.value && { sort: sortBy.value }),
     };
-
     const res = await websiteApi.get('v1/items', { params });
-
     if (res.data.status) {
       const paginatedData = res.data.data;
-
       items.value = paginatedData.data;
-
       pagination.currentPage = paginatedData.current_page;
       pagination.lastPage = paginatedData.last_page;
       pagination.total = paginatedData.total;
       pagination.from = paginatedData.from ?? 0;
       pagination.to = paginatedData.to ?? 0;
       pagination.perPage = paginatedData.per_page;
-
       items.value.forEach(item => initItemSelections(item));
     }
   } catch (e) {
@@ -562,7 +440,7 @@ const fetchItems = async (page = 1) => {
   }
 };
 
-// ─── Pagination Navigation ────────────────────────────────────────────────────
+// ─── Pagination ───────────────────────────────────────────────────────────────
 
 const goToPage = (page) => {
   if (page < 1 || page > pagination.lastPage || page === pagination.currentPage) return;
@@ -570,36 +448,28 @@ const goToPage = (page) => {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
-// ─── Filter / Sort Handlers ───────────────────────────────────────────────────
+// ─── Filter / Sort ────────────────────────────────────────────────────────────
 
 let searchDebounceTimer = null;
 const onSearchInput = () => {
   clearTimeout(searchDebounceTimer);
   searchDebounceTimer = setTimeout(() => fetchItems(1), 400);
 };
-
 const onFilterChange = () => fetchItems(1);
 const onSortChange = () => fetchItems(1);
 
-// ─── Item Selection Initialisation ───────────────────────────────────────────
+// ─── Item Selection ───────────────────────────────────────────────────────────
 
 const initItemSelections = (item) => {
   if (!item.quantity_types?.length) return;
-
   const defaultQT = item.quantity_types[0];
   selectedQuantityType[item.item_id] = defaultQT.quantity_type_id;
-
   defaultQT.variant_types?.forEach(vt => {
     const key = `${item.item_id}-${vt.variant_type_id}`;
-    if (vt.variants?.length) {
-      selectedVariants[key] = vt.variants[0].variant_id;
-    }
+    if (vt.variants?.length) selectedVariants[key] = vt.variants[0].variant_id;
   });
-
   resolveSubItem(item);
 };
-
-// ─── Computed Helpers ─────────────────────────────────────────────────────────
 
 const getSelectedQuantityType = (item) => {
   const id = selectedQuantityType[item.item_id];
@@ -622,13 +492,9 @@ const getSelectedVariantIds = (item) => {
 const getMatchingSubItems = (item) => {
   const qt = getSelectedQuantityType(item);
   if (!qt?.sub_items) return [];
-
   const selected = getSelectedVariantIds(item);
   if (!selected.length) return qt.sub_items;
-
-  return qt.sub_items.filter(sub =>
-    selected.every(vid => sub.variant_ids.includes(vid))
-  );
+  return qt.sub_items.filter(sub => selected.every(vid => sub.variant_ids.includes(vid)));
 };
 
 const getActiveSubItem = (item) => {
@@ -642,8 +508,6 @@ const resolveSubItem = (item) => {
   const matches = getMatchingSubItems(item);
   selectedSubItem[item.item_id] = matches.length ? matches[0].sub_item_id : null;
 };
-
-// ─── Event Handlers ───────────────────────────────────────────────────────────
 
 const onQuantityTypeChange = (item) => {
   const qt = getSelectedQuantityType(item);
@@ -659,37 +523,19 @@ const onVariantChange = (item) => resolveSubItem(item);
 // ─── Formatting ───────────────────────────────────────────────────────────────
 
 const formatPrice = (value) =>
-  parseFloat(value).toLocaleString('en-IN', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-
-const getMrpWithGst = (subItem) => {
-  if (!subItem) return 0;
-  const price = parseFloat(subItem.price);
-  const tax = parseFloat(subItem.tax_type?.tax ?? 0);
-  return price * (1 + tax / 100);
-};
+  parseFloat(value).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 // ─── Cart ─────────────────────────────────────────────────────────────────────
 
-/**
- * Adds item to cart:
- * 1. POSTs to backend API with guest_uuid
- * 2. On success, saves full cart-item data to localStorage so CartPage can read it
- */
 const addToCart = async (item) => {
   const subItem = getActiveSubItem(item);
   if (!subItem) return;
 
   const qt = getSelectedQuantityType(item);
-
   cartLoadingItems[item.item_id] = true;
 
   try {
-    const guestId = getGuestId(); // generates UUID once, persists in localStorage
-
-    // ── 1. Call backend API ──
+    const guestId = getGuestId();
     const res = await websiteApi.post('v1/cart/add', {
       guest_uuid: guestId,
       sub_item_id: subItem.sub_item_id,
@@ -697,14 +543,10 @@ const addToCart = async (item) => {
       unit_price: parseFloat(subItem.gst_included_price),
     });
 
-    if (!res.data.success) {
-      throw new Error(res.data.message || 'Failed to add to cart');
-    }
+    if (!res.data.success) throw new Error(res.data.message || 'Failed to add to cart');
 
-    const backendCart = res.data.data; // { cart_id, guest_uuid, sub_item_id, quantity, unit_price, ... }
+    const backendCart = res.data.data;
 
-    // ── 2. Build a rich cart entry for localStorage ──
-    // We store everything CartPage needs so it doesn't have to re-fetch item details.
     const cartEntry = {
       cart_id: backendCart.cart_id,
       item_id: item.item_id,
@@ -713,41 +555,31 @@ const addToCart = async (item) => {
       quantity_type: qt?.quantity_type ?? '',
       sub_item_id: subItem.sub_item_id,
       quantity_label: subItem.quantity_label,
-      price: subItem.price,                          // original MRP
+      price: subItem.price,
       discount: subItem.discount ?? '0.00',
       gst_included_price: subItem.gst_included_price,
       gst_excluded_price: subItem.gst_excluded_price,
       tax_type_id: subItem.tax_type_id ?? null,
-      // Collect selected variant labels for display
       selected_variants: (qt?.variant_types ?? []).map(vt => {
         const selectedVid = selectedVariants[`${item.item_id}-${vt.variant_type_id}`];
         const variant = vt.variants?.find(v => v.variant_id === selectedVid);
-        return {
-          variant_type_id: vt.variant_type_id,
-          variant_type: vt.variant_type,
-          variant: variant?.variant ?? '',
-        };
+        return { variant_type_id: vt.variant_type_id, variant_type: vt.variant_type, variant: variant?.variant ?? '' };
       }),
-      qty: backendCart.quantity, // use backend quantity (handles duplicate adds)
+      qty: backendCart.quantity,
     };
 
-    // ── 3. Merge into localStorage cart ──
-    // If the exact same sub_item_id already exists, replace it (backend already incremented qty).
     const stored = localStorage.getItem('cart_items');
     let cartItems = stored ? JSON.parse(stored) : [];
-
     const existingIndex = cartItems.findIndex(c => c.sub_item_id === cartEntry.sub_item_id);
     if (existingIndex !== -1) {
-      cartItems[existingIndex] = cartEntry; // update qty from backend response
+      cartItems[existingIndex] = cartEntry;
     } else {
       cartItems.push(cartEntry);
     }
-
     localStorage.setItem('cart_items', JSON.stringify(cartItems));
     emitter.emit('cart-updated');
 
     showToast(`"${item.item_name}" added to cart!`, true);
-
   } catch (e) {
     console.error('addToCart error:', e);
     showToast(e.message || 'Could not add to cart. Please try again.', false);
@@ -756,38 +588,18 @@ const addToCart = async (item) => {
   }
 };
 
+console.log('Token:', localStorage.getItem('website_user_token'));
+console.log('User:', localStorage.getItem('website_user'));
+
 // ─── Image Fallback ───────────────────────────────────────────────────────────
 
 const handleImageError = (e) => {
   e.target.src = '/assets/website/img/product/placeholder.jpg';
 };
 
-// ─── Wholesale Modal ──────────────────────────────────────────────────────────
-
-const openWholesaleModal = (item) => {
-  currentWholesaleItem.value = item;
-  wholesaleModalInstance?.show();
-};
-
-const submitWholesaleRequest = () => {
-  console.log('Wholesale request:', wholesaleForm.value, 'item:', currentWholesaleItem.value);
-  alert('Thank you! Your wholesale request has been submitted. We will send pricing details to your email shortly.');
-
-  wholesaleForm.value = {
-    firstName: '', lastName: '', email: '', phone: '',
-    companyName: '', businessType: '', gstNumber: '',
-    address: '', city: '', state: '', pincode: '', additionalInfo: ''
-  };
-
-  wholesaleModalInstance?.hide();
-};
-
 // ─── Lifecycle ────────────────────────────────────────────────────────────────
 
 onMounted(async () => {
-  const el = document.getElementById('wholesaleModal');
-  if (el) wholesaleModalInstance = new Modal(el);
-
   await Promise.all([fetchCategories(), fetchItems(1)]);
 });
 </script>
@@ -907,7 +719,6 @@ onMounted(async () => {
   color: #6c757d !important;
 }
 
-/* Image */
 .hover-zoom {
   transition: transform 0.5s ease;
   max-height: 200px;
@@ -952,7 +763,6 @@ onMounted(async () => {
   cursor: not-allowed;
 }
 
-/* GST label pill */
 .gst-pill {
   font-size: 0.8rem;
   font-weight: 600;
@@ -988,61 +798,5 @@ onMounted(async () => {
   background-color: #f8f9fa;
   padding: 0.6rem;
   font-size: 0.9rem;
-}
-
-/* Modal */
-.modal-content {
-  border-radius: 15px;
-  border: none;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-}
-
-.modal-header {
-  padding: 1.5rem 1.5rem 0.5rem;
-}
-
-.alert-info {
-  background-color: #e7f3ff;
-  border-color: #b3d9ff;
-  color: #004085;
-  border-radius: 10px;
-}
-
-.form-label {
-  font-weight: 500;
-  font-size: 0.9rem;
-  color: #495057;
-  margin-bottom: 0.5rem;
-}
-
-.form-control,
-.form-select {
-  border-radius: 8px;
-  border: 1px solid #ced4da;
-  padding: 0.6rem 0.75rem;
-  font-size: 0.95rem;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.form-control:focus,
-.form-select:focus {
-  border-color: #0d6efd;
-  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.1);
-}
-
-.text-primary {
-  color: #0d6efd !important;
-}
-
-.btn-primary {
-  border-radius: 8px;
-  padding: 0.6rem 1.5rem;
-  font-weight: 500;
-}
-
-.btn-secondary {
-  border-radius: 8px;
-  padding: 0.6rem 1.5rem;
-  font-weight: 500;
 }
 </style>
