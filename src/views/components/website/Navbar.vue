@@ -411,10 +411,11 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
-    window.removeEventListener('storage', loadUserData);
-    window.removeEventListener('click', handleClickOutside);
-    emitter.off('cart-updated');
-    emitter.off("user-logged-in");
+  window.removeEventListener('storage', loadUserData);
+  window.removeEventListener('click', handleClickOutside);
+  emitter.off('cart-updated');
+  emitter.off('user-logged-in');
+  if (searchTimeout) clearTimeout(searchTimeout);
 });
 </script>
 

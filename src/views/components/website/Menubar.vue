@@ -135,7 +135,7 @@ const user = ref(null);
 
 // Computed property to check if user is logged in
 const isLoggedIn = computed(() => {
-  return user.value !== null && localStorage.getItem("website_user_token");
+  return user.value !== null && !!localStorage.getItem("website_user_token");
 });
 
 // Get user name, with fallback

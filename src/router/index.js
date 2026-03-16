@@ -61,12 +61,14 @@ const router = createRouter({
           path: "profile",
           name: "Profile",
           component: () => import(/* webpackChunkName: "profile" */ "@/views/website/Profile.vue"),
+          meta: { requiresWebAuth: true },
         },
         {
           path: "orderview",
           name: "Order View",
           component: () =>
             import(/* webpackChunkName: "orderview" */ "@/views/website/Orderview.vue"),
+          meta: { requiresWebAuth: true },
         },
         {
           path: "cart",
@@ -390,12 +392,13 @@ const router = createRouter({
 
 // Auth guard
 router.beforeEach((to, from, next) => {
-  const token = localStorage.getItem("token");
-  if (to.meta.requiresAuth && !token) {
-    next({ name: "admin-login" });
-  } else {
-    next();
-  }
+  const adminToken = localStorage.getItem("token");
+  const userToken = localStorage.getItem("website_user_token");
+
+  if (to.meta.requiresAuth && !adminToken) return next({ name: "admin-login" });
+  if (to.meta.requiresWebAuth && !userToken)
+    return next({ name: "Login", query: { redirect: to.fullPath } });
+  next();
 });
 
 // Handle chunk load errors (e.g., after deployments)
